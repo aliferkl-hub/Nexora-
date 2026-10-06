@@ -1,0 +1,6 @@
+{
+  "name": "NEXORA PLAY",
+  "description": "Plataforma de entretenimento e streaming premium. Filmes, séries, canais ao vivo autorizados e muito mais. Seu entretenimento, do seu jeito.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
