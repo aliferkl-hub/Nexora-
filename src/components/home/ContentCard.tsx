@@ -1,23 +1,28 @@
-import React, { useState } from 'react';
-import { Play, Bookmark, Check, Star, Info, Radio } from 'lucide-react';
+import React from 'react';
+import { Play, Bookmark, Check, Star, Info, Radio, Lock, ShieldCheck } from 'lucide-react';
 import { ContentItem } from '../../types';
 import { useApp } from '../../context/AppContext';
+import { StreamingImage } from '../common/StreamingImage';
+import { isContentPlayable, getRightsStatusInfo } from '../../utils/catalogValidation';
 
 interface ContentCardProps {
   content: ContentItem;
-  size?: 'normal' | 'wide' | 'featured';
+  size?: 'normal' | 'wide' | 'featured' | 'poster';
+  layout?: 'poster' | 'backdrop' | 'channel';
 }
 
 export const ContentCard: React.FC<ContentCardProps> = ({ 
   content, 
-  size = 'normal' 
+  size = 'normal',
+  layout
 }) => {
   const { openPlayer, openContentDetail, toggleFavorite, isFavorite } = useApp();
-  const [imgError, setImgError] = useState(false);
 
   const isFav = isFavorite(content.id);
+  const playable = isContentPlayable(content);
+  const rightsInfo = getRightsStatusInfo(content.rightsStatus);
 
-  // Age rating badge colors matching standard ratings
+  // Age rating badge colors matching standard Brazilian ratings
   const getRatingBg = (rating: string) => {
     switch (rating) {
       case 'L': return 'bg-emerald-600 text-white';
@@ -30,47 +35,51 @@ export const ContentCard: React.FC<ContentCardProps> = ({
     }
   };
 
-  const aspectClass = size === 'wide' ? 'aspect-[16/9]' : 'aspect-[16/10]';
+  const isChannel = content.type === 'channel';
+  const effectiveLayout = layout || (isChannel ? 'channel' : size === 'poster' ? 'poster' : 'backdrop');
+  const imageSource = effectiveLayout === 'poster' 
+    ? (content.posterUrl || content.bannerUrl)
+    : isChannel
+    ? (content.bannerUrl || content.logoUrl || content.posterUrl)
+    : (content.bannerUrl || content.posterUrl);
+
+  const aspectMode = effectiveLayout === 'poster' ? 'poster' : 'banner';
 
   return (
     <div 
-      className="group relative flex flex-col bg-[#0A0E1A] border border-white/8 rounded-2xl overflow-hidden hover:border-cyan-500/40 hover:shadow-xl hover:shadow-cyan-950/40 transition-all duration-300 cursor-pointer"
+      className="group relative flex flex-col bg-[#0C090A] border border-white/8 rounded-2xl overflow-hidden hover:border-rose-500/50 hover:shadow-2xl hover:shadow-rose-950/40 transition-all duration-300 cursor-pointer h-full"
       onClick={() => openContentDetail(content)}
     >
       
-      {/* Visual Thumbnail Frame */}
-      <div className={`relative w-full ${aspectClass} overflow-hidden bg-slate-900`}>
-        {!imgError && content.bannerUrl ? (
-          <img
-            src={content.bannerUrl}
-            alt={content.title}
-            onError={() => setImgError(true)}
-            referrerPolicy="no-referrer"
-            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-950 flex flex-col items-center justify-center p-4 text-center">
-            <span className="font-display font-bold text-cyan-400 text-sm tracking-wider uppercase">
-              NEXORA PLAY
-            </span>
-            <span className="text-xs text-slate-300 mt-1 line-clamp-2">
-              {content.title}
-            </span>
-          </div>
-        )}
+      {/* Visual Frame */}
+      <div className="relative w-full overflow-hidden bg-black/60">
+        <StreamingImage
+          src={imageSource}
+          alt={content.title}
+          type={content.type}
+          aspect={aspectMode}
+          imgClassName="group-hover:scale-105 transition-transform duration-500 ease-out"
+        />
 
-        {/* Scrim Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0E1A] via-transparent to-black/30" />
+        {/* Gradient Scrim Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0C090A] via-transparent to-black/30 pointer-events-none" />
 
-        {/* Top Badges (Top Left & Top Right) */}
-        <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between pointer-events-none">
-          {content.type === 'channel' ? (
-            <span className="text-[10px] font-bold font-mono tracking-wider px-2 py-0.5 rounded bg-red-600 text-white uppercase shadow-sm flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-              <span>AO VIVO</span>
-            </span>
+        {/* Top Badges */}
+        <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between pointer-events-none z-10">
+          {isChannel ? (
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold font-mono tracking-wider px-2 py-0.5 rounded bg-red-600 text-white uppercase shadow-sm flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                <span>AO VIVO</span>
+              </span>
+              {content.channelNumber && (
+                <span className="text-[10px] font-bold font-mono px-1.5 py-0.5 rounded bg-black/70 text-amber-300 border border-white/10">
+                  CANAL {content.channelNumber}
+                </span>
+              )}
+            </div>
           ) : content.badge ? (
-            <span className="text-[10px] font-bold font-mono tracking-wider px-2 py-0.5 rounded bg-cyan-500/90 text-slate-950 uppercase shadow-sm">
+            <span className="text-[10px] font-bold font-mono tracking-wider px-2 py-0.5 rounded bg-gradient-to-r from-rose-600 to-amber-500 text-white uppercase shadow-sm">
               {content.badge}
             </span>
           ) : (
@@ -86,27 +95,37 @@ export const ContentCard: React.FC<ContentCardProps> = ({
 
         {/* Hover Quick Actions Overlay */}
         <div 
-          className="absolute inset-0 bg-black/50 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-3"
+          className="absolute inset-0 bg-black/65 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-3 z-20"
           onClick={(e) => e.stopPropagation()}
         >
-          <button
-            onClick={() => openPlayer(content)}
-            className="p-3.5 rounded-full bg-cyan-400 text-slate-950 hover:bg-cyan-300 hover:scale-110 transition-all shadow-lg shadow-cyan-500/40 cursor-pointer"
-            title="Assistir Imediatamente"
-          >
-            <Play className="w-5 h-5 ml-0.5 fill-current" />
-          </button>
+          {playable ? (
+            <button
+              onClick={() => openPlayer(content)}
+              className="p-3.5 rounded-full bg-gradient-to-r from-rose-600 to-amber-500 text-white hover:scale-110 transition-all shadow-lg shadow-rose-950/60 cursor-pointer border border-amber-300/30"
+              title="Assistir Imediatamente"
+            >
+              <Play className="w-5 h-5 ml-0.5 fill-current" />
+            </button>
+          ) : (
+            <div 
+              className="px-3 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-semibold flex items-center gap-1.5"
+              title="Direitos pendentes de homologação"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Em Análise</span>
+            </div>
+          )}
 
           <button
             onClick={() => toggleFavorite(content.id)}
             className={`p-3 rounded-full border transition-all cursor-pointer ${
               isFav
-                ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300'
+                ? 'bg-rose-500/20 border-rose-400 text-rose-300'
                 : 'bg-black/60 border-white/20 text-white hover:bg-white/20'
             }`}
             title={isFav ? 'Remover da Minha Lista' : 'Adicionar à Minha Lista'}
           >
-            {isFav ? <Check className="w-4 h-4 text-cyan-400" /> : <Bookmark className="w-4 h-4" />}
+            {isFav ? <Check className="w-4 h-4 text-rose-400" /> : <Bookmark className="w-4 h-4" />}
           </button>
 
           <button
@@ -122,9 +141,9 @@ export const ContentCard: React.FC<ContentCardProps> = ({
       {/* Card Info Details */}
       <div className="p-4 flex flex-col flex-1 justify-between gap-3">
         <div>
-          {/* Metadata Row: Unboxed clean text */}
+          {/* Metadata Row */}
           <div className="flex items-center gap-2 text-xs text-slate-400 mb-1.5">
-            <span className="text-cyan-400 font-medium">
+            <span className="text-amber-400 font-semibold font-mono">
               {content.type === 'movie' ? 'Filme' : content.type === 'series' ? 'Série' : 'Canal'}
             </span>
             <span aria-hidden="true">·</span>
@@ -132,12 +151,12 @@ export const ContentCard: React.FC<ContentCardProps> = ({
             {content.duration && (
               <>
                 <span aria-hidden="true">·</span>
-                <span className="font-mono text-[11px]">{content.duration}</span>
+                <span className="font-mono text-[11px] text-slate-300">{content.duration}</span>
               </>
             )}
           </div>
 
-          <h3 className="font-display font-bold text-white text-base group-hover:text-cyan-300 transition-colors line-clamp-1">
+          <h3 className="font-display font-bold text-white text-base group-hover:text-amber-300 transition-colors line-clamp-1">
             {content.title}
           </h3>
 
@@ -146,37 +165,34 @@ export const ContentCard: React.FC<ContentCardProps> = ({
           </p>
         </div>
 
-        {/* Card Footer: Specs + Action Buttons */}
+        {/* Card Footer */}
         <div className="pt-3 border-t border-white/5 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 text-xs text-slate-400">
+          <div className="flex items-center gap-2 text-xs text-slate-400">
             <span className="flex items-center gap-1 text-amber-400 font-mono text-[11px]">
               <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
               <span>{content.rating}</span>
             </span>
             <span aria-hidden="true" className="text-slate-700">·</span>
-            <span className="text-[11px] text-slate-400">
-              {content.audioSpecs?.[0] || '4K HDR'}
+            <span className="text-[10px] font-mono text-emerald-400/90 flex items-center gap-1">
+              <ShieldCheck className="w-3 h-3" />
+              <span>{rightsInfo.shortLabel}</span>
             </span>
           </div>
 
           <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={() => toggleFavorite(content.id)}
-              className={`p-1.5 rounded-lg text-xs transition-colors cursor-pointer sm:hidden ${
-                isFav ? 'text-cyan-400 bg-cyan-950/60' : 'text-slate-400 hover:text-white'
-              }`}
-              title={isFav ? 'Na Minha Lista' : 'Adicionar à Lista'}
-            >
-              <Bookmark className={`w-3.5 h-3.5 ${isFav ? 'fill-cyan-400' : ''}`} />
-            </button>
-
-            <button
-              onClick={() => openPlayer(content)}
-              className="px-2.5 py-1 text-xs font-semibold text-cyan-300 bg-cyan-950/70 hover:bg-cyan-900 border border-cyan-500/30 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
-            >
-              <Play className="w-3 h-3 fill-cyan-300" />
-              <span>Assistir</span>
-            </button>
+            {playable ? (
+              <button
+                onClick={() => openPlayer(content)}
+                className="px-2.5 py-1 text-xs font-semibold text-cyan-300 bg-cyan-950/70 hover:bg-cyan-900 border border-cyan-500/30 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <Play className="w-3 h-3 fill-cyan-300" />
+                <span>Assistir</span>
+              </button>
+            ) : (
+              <span className="px-2 py-0.5 text-[10px] font-mono rounded bg-slate-800 text-slate-400 border border-white/5">
+                Em Breve
+              </span>
+            )}
           </div>
         </div>
       </div>

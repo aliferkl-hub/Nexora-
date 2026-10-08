@@ -7,15 +7,20 @@ import {
   AdminPlatformConfig, 
   UserAccount, 
   ActiveView,
-  CatalogSyncLog
+  CatalogSyncLog,
+  PaymentOrder,
+  PaymentOrderStatus
 } from '../types';
 import { 
   INITIAL_CONTENTS, 
   INITIAL_PLANS, 
   INITIAL_COUPONS, 
   INITIAL_ADMIN_CONFIG, 
-  DEMO_USER 
+  DEMO_USER,
+  INITIAL_PAYMENT_ORDERS
 } from '../data/seedData';
+import { isContentPlayable, validateContentBeforeSave } from '../utils/catalogValidation';
+import { OFFICIAL_PIX_CONFIG } from '../utils/pixHelper';
 
 interface ToastMessage {
   id: string;
@@ -92,6 +97,27 @@ interface AppContextType {
   cancelSubscription: () => void;
   updateContinueWatching: (contentId: string, progressPercent: number, episode?: Episode) => void;
 
+  // Payment Orders (PIX + WhatsApp Workflow)
+  paymentOrders: PaymentOrder[];
+  setPaymentOrders: React.Dispatch<React.SetStateAction<PaymentOrder[]>>;
+  createPaymentOrder: (params: {
+    planId: PlanConfig['id'];
+    paymentMethod?: 'PIX' | 'Cartão de Crédito' | 'Boleto';
+    customerName: string;
+    customerEmail: string;
+    customerPhone: string;
+    status?: PaymentOrderStatus;
+    notes?: string;
+  }) => PaymentOrder;
+  updateOrderStatus: (orderId: string, status: PaymentOrderStatus, notes?: string) => void;
+  confirmPaymentAndActivate: (orderId: string) => void;
+  rejectPaymentOrder: (orderId: string, reason?: string) => void;
+
+  // Annual Plan Dedicated Pix Modal
+  isAnnualPixModalOpen: boolean;
+  openAnnualPixModal: () => void;
+  closeAnnualPixModal: () => void;
+
   // Global Toasts & Helpers
   toasts: ToastMessage[];
   addToast: (message: string, type?: ToastMessage['type']) => void;
@@ -108,39 +134,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Storage-backed Catalog (v3: Authorized streaming catalog)
+  // Storage-backed Catalog (Pizza Cine v1: Authorized streaming catalog)
   const [contents, setContents] = useState<ContentItem[]>(() => {
-    const saved = localStorage.getItem('nexora_contents_v3');
+    const saved = localStorage.getItem('pizzacine_contents_v1');
     return saved ? JSON.parse(saved) : INITIAL_CONTENTS;
   });
 
   // Storage-backed Plans
   const [plans, setPlans] = useState<PlanConfig[]>(() => {
-    const saved = localStorage.getItem('nexora_plans_v1');
+    const saved = localStorage.getItem('pizzacine_plans_v1');
     return saved ? JSON.parse(saved) : INITIAL_PLANS;
   });
 
   // Coupons
   const [coupons, setCoupons] = useState<Coupon[]>(() => {
-    const saved = localStorage.getItem('nexora_coupons_v1');
+    const saved = localStorage.getItem('pizzacine_coupons_v1');
     return saved ? JSON.parse(saved) : INITIAL_COUPONS;
   });
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
 
   // Admin Platform Config
   const [adminConfig, setAdminConfig] = useState<AdminPlatformConfig>(() => {
-    const saved = localStorage.getItem('nexora_admin_cfg_v2');
+    const saved = localStorage.getItem('pizzacine_admin_cfg_v1');
     return saved ? JSON.parse(saved) : INITIAL_ADMIN_CONFIG;
   });
 
   // Admin Auth
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
-    return localStorage.getItem('nexora_admin_auth') === 'true';
+    return localStorage.getItem('pizzacine_admin_auth') === 'true';
   });
 
   // Client User
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
-    const saved = localStorage.getItem('nexora_user_v1');
+    const saved = localStorage.getItem('pizzacine_user_v1');
     return saved ? JSON.parse(saved) : DEMO_USER;
   });
 
@@ -153,6 +179,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Checkout Plan
   const [selectedPlanForCheckout, setSelectedPlanForCheckout] = useState<PlanConfig | null>(null);
 
+  // Payment Orders (PIX + WhatsApp Workflow)
+  const [paymentOrders, setPaymentOrders] = useState<PaymentOrder[]>(() => {
+    const saved = localStorage.getItem('pizzacine_payment_orders_v1');
+    return saved ? JSON.parse(saved) : INITIAL_PAYMENT_ORDERS;
+  });
+
+  // Dedicated Annual Pix Modal
+  const [isAnnualPixModalOpen, setIsAnnualPixModalOpen] = useState<boolean>(false);
+  const openAnnualPixModal = () => setIsAnnualPixModalOpen(true);
+  const closeAnnualPixModal = () => setIsAnnualPixModalOpen(false);
+
   // Video Player
   const [activePlayingContent, setActivePlayingContent] = useState<ContentItem | null>(null);
   const [activePlayingEpisode, setActivePlayingEpisode] = useState<Episode | null>(null);
@@ -161,30 +198,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   // Referral
-  const [referralCode, setReferralCode] = useState<string>('NEXORA-VIP');
+  const [referralCode, setReferralCode] = useState<string>('PIZZA-VIP');
 
   // Sync to local storage
   useEffect(() => {
-    localStorage.setItem('nexora_contents_v3', JSON.stringify(contents));
+    localStorage.setItem('pizzacine_contents_v1', JSON.stringify(contents));
   }, [contents]);
 
   useEffect(() => {
-    localStorage.setItem('nexora_plans_v1', JSON.stringify(plans));
+    localStorage.setItem('pizzacine_plans_v1', JSON.stringify(plans));
   }, [plans]);
 
   useEffect(() => {
-    localStorage.setItem('nexora_coupons_v1', JSON.stringify(coupons));
+    localStorage.setItem('pizzacine_coupons_v1', JSON.stringify(coupons));
   }, [coupons]);
 
   useEffect(() => {
-    localStorage.setItem('nexora_admin_cfg_v2', JSON.stringify(adminConfig));
+    localStorage.setItem('pizzacine_admin_cfg_v1', JSON.stringify(adminConfig));
   }, [adminConfig]);
 
   useEffect(() => {
+    localStorage.setItem('pizzacine_payment_orders_v1', JSON.stringify(paymentOrders));
+  }, [paymentOrders]);
+
+  useEffect(() => {
     if (currentUser) {
-      localStorage.setItem('nexora_user_v1', JSON.stringify(currentUser));
+      localStorage.setItem('pizzacine_user_v1', JSON.stringify(currentUser));
     } else {
-      localStorage.removeItem('nexora_user_v1');
+      localStorage.removeItem('pizzacine_user_v1');
     }
   }, [currentUser]);
 
@@ -216,16 +257,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Content Operations
   const addContent = (newItem: Omit<ContentItem, 'id' | 'viewsCount' | 'order'>) => {
-    const id = `nx-${Date.now()}`;
+    const id = `pc-${Date.now()}`;
     const item: ContentItem = {
       ...newItem,
       id,
       order: contents.length + 1,
       viewsCount: 1,
-      rating: 4.8
+      rating: 4.8,
+      availabilityStatus: newItem.availabilityStatus || 'available'
     };
+
+    // Automated 8-point Anti-Duplicate and Metadata Check
+    const validation = validateContentBeforeSave(item, contents);
+    if (!validation.isValid) {
+      addToast(validation.errors[0], 'error');
+      return false;
+    }
+
+    if (validation.warnings.length > 0) {
+      addToast(validation.warnings[0], 'warning');
+    }
+
     setContents((prev) => [item, ...prev]);
-    addToast(`"${item.title}" adicionado ao catálogo oficial com sucesso!`, 'success');
+    addToast(`"${item.title}" adicionado ao catálogo Pizza Cine com sucesso!`, 'success');
+    return true;
   };
 
   const updateContent = (id: string, updated: Partial<ContentItem>) => {
@@ -293,8 +348,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setActiveView('catalog');
   };
 
-  // Video Player
+  // Video Player with Rights & Authorization Gate
   const openPlayer = (content: ContentItem, episode?: Episode) => {
+    if (!isContentPlayable(content)) {
+      addToast(
+        `"${content.title}" está aguardando liberação de direitos / fonte autorizada e não pode ser reproduzido.`,
+        'warning'
+      );
+      return;
+    }
+
     setActivePlayingContent(content);
     setActivePlayingEpisode(episode || null);
     // increment local views count
@@ -360,8 +423,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const loginAdmin = (password: string): boolean => {
-    if (password === 'nexora2026' || password === 'admin') {
+    if (password === 'pizzacine2026' || password === 'nexora2026' || password === 'admin') {
       setIsAdminLoggedIn(true);
+      localStorage.setItem('pizzacine_admin_auth', 'true');
       localStorage.setItem('nexora_admin_auth', 'true');
       addToast('Acesso Master Owner concedido com sucesso!', 'success');
       return true;
@@ -372,6 +436,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const logoutAdmin = () => {
     setIsAdminLoggedIn(false);
+    localStorage.removeItem('pizzacine_admin_auth');
     localStorage.removeItem('nexora_admin_auth');
     addToast('Sessão administrativa encerrada.', 'info');
   };
@@ -495,7 +560,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       ],
       invoices: [],
-      referralCode: `${name.toUpperCase().slice(0, 4)}-NEXORA`,
+      referralCode: `${name.toUpperCase().slice(0, 4)}-PIZZA`,
       createdAt: new Date().toISOString()
     };
     setCurrentUser(newUser);
@@ -588,6 +653,155 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  // Payment Orders (PIX + WhatsApp Workflow)
+  const createPaymentOrder = ({
+    planId,
+    paymentMethod = 'PIX',
+    customerName,
+    customerEmail,
+    customerPhone,
+    status = 'waiting_payment',
+    notes
+  }: {
+    planId: PlanConfig['id'];
+    paymentMethod?: 'PIX' | 'Cartão de Crédito' | 'Boleto';
+    customerName: string;
+    customerEmail: string;
+    customerPhone: string;
+    status?: PaymentOrderStatus;
+    notes?: string;
+  }): PaymentOrder => {
+    const plan = plans.find((p) => p.id === planId) || plans[3] || plans[0];
+    const discount = appliedCoupon ? (plan.totalPrice * appliedCoupon.discountPercent) / 100 : 0;
+    const finalAmount = Math.max(0, plan.totalPrice - discount);
+    const orderId = `ord-nx-${Date.now().toString().slice(-5)}`;
+    const txId = `TXN${Date.now()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+    const newOrder: PaymentOrder = {
+      id: orderId,
+      date: new Date().toLocaleString('pt-BR'),
+      customerName,
+      customerEmail,
+      customerPhone,
+      planId: plan.id,
+      planName: `${plan.name} (${plan.subtitle})`,
+      amount: finalAmount,
+      paymentMethod,
+      pixKey: OFFICIAL_PIX_CONFIG.rawKey,
+      status,
+      transactionId: txId,
+      notes: notes || `Pedido Pix gerado. Chave: ${OFFICIAL_PIX_CONFIG.rawKey}`,
+      proofSentAt: status === 'proof_received' ? new Date().toLocaleString('pt-BR') : undefined
+    };
+
+    setPaymentOrders((prev) => [newOrder, ...prev]);
+
+    // Update or register user with pending status (SECURITY RULE: Never auto-activate before admin confirmation!)
+    const invoiceItem: UserAccount['invoices'][0] = {
+      id: `inv-${orderId}`,
+      date: new Date().toISOString().split('T')[0],
+      planName: `${plan.name} (${plan.subtitle})`,
+      amount: finalAmount,
+      status: status,
+      paymentMethod,
+      transactionId: txId
+    };
+
+    if (currentUser) {
+      setCurrentUser({
+        ...currentUser,
+        currentPlanId: plan.id,
+        subscriptionStatus: 'pending',
+        pendingOrderStatus: status,
+        paymentMethod: `${paymentMethod} (Chave ${OFFICIAL_PIX_CONFIG.formattedKey})`,
+        invoices: [invoiceItem, ...currentUser.invoices.filter((inv) => inv.id !== invoiceItem.id)]
+      });
+    } else {
+      const newUser: UserAccount = {
+        ...DEMO_USER,
+        id: `usr-${Date.now()}`,
+        name: customerName,
+        email: customerEmail,
+        phone: customerPhone,
+        currentPlanId: plan.id,
+        subscriptionStatus: 'pending',
+        pendingOrderStatus: status,
+        paymentMethod: `${paymentMethod} (Chave ${OFFICIAL_PIX_CONFIG.formattedKey})`,
+        invoices: [invoiceItem],
+        createdAt: new Date().toISOString()
+      };
+      setCurrentUser(newUser);
+    }
+
+    addToast(`Pedido ${orderId} registrado. Pagamento aguardando confirmação.`, 'info');
+    return newOrder;
+  };
+
+  const updateOrderStatus = (orderId: string, status: PaymentOrderStatus, notes?: string) => {
+    setPaymentOrders((prev) =>
+      prev.map((ord) => {
+        if (ord.id === orderId) {
+          const nowStr = new Date().toLocaleString('pt-BR');
+          return {
+            ...ord,
+            status,
+            notes: notes !== undefined ? notes : ord.notes,
+            proofSentAt: status === 'proof_received' && !ord.proofSentAt ? nowStr : ord.proofSentAt,
+            activatedAt: status === 'plan_activated' ? nowStr : ord.activatedAt
+          };
+        }
+        return ord;
+      })
+    );
+
+    // If activated, update currentUser subscription
+    if (status === 'plan_activated') {
+      const now = new Date();
+      now.setFullYear(now.getFullYear() + 1);
+      setCurrentUser((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          subscriptionStatus: 'active',
+          subscriptionValidUntil: now.toISOString().split('T')[0],
+          pendingOrderStatus: 'plan_activated',
+          invoices: prev.invoices.map((inv) =>
+            inv.id.includes(orderId) || inv.status === 'waiting_payment' || inv.status === 'proof_received'
+              ? { ...inv, status: 'paid' }
+              : inv
+          )
+        };
+      });
+    } else if (status === 'payment_rejected') {
+      setCurrentUser((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          pendingOrderStatus: 'payment_rejected'
+        };
+      });
+    } else if (status === 'proof_received') {
+      setCurrentUser((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          subscriptionStatus: 'pending',
+          pendingOrderStatus: 'proof_received'
+        };
+      });
+    }
+  };
+
+  const confirmPaymentAndActivate = (orderId: string) => {
+    updateOrderStatus(orderId, 'plan_activated', 'Pagamento confirmado e plano ativado manualmente pelo Master Owner.');
+    addToast('🎉 Pagamento confirmado com sucesso! Acesso do cliente ativado.', 'success');
+  };
+
+  const rejectPaymentOrder = (orderId: string, reason?: string) => {
+    updateOrderStatus(orderId, 'payment_rejected', reason || 'Pagamento recusado após conferência bancária.');
+    addToast('Pagamento marcado como recusado.', 'info');
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -641,6 +855,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         completeSubscriptionPayment,
         cancelSubscription,
         updateContinueWatching,
+        paymentOrders,
+        setPaymentOrders,
+        createPaymentOrder,
+        updateOrderStatus,
+        confirmPaymentAndActivate,
+        rejectPaymentOrder,
+        isAnnualPixModalOpen,
+        openAnnualPixModal,
+        closeAnnualPixModal,
         toasts,
         addToast,
         removeToast,

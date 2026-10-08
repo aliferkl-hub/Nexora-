@@ -7,6 +7,7 @@ interface ContentSectionProps {
   title: string;
   subtitle?: string;
   items: ContentItem[];
+  layout?: 'poster' | 'backdrop' | 'channel';
   viewAllAction?: () => void;
 }
 
@@ -14,6 +15,7 @@ export const ContentSection: React.FC<ContentSectionProps> = ({
   title,
   subtitle,
   items,
+  layout = 'backdrop',
   viewAllAction,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -29,6 +31,12 @@ export const ContentSection: React.FC<ContentSectionProps> = ({
   };
 
   if (!items || items.length === 0) return null;
+
+  const cardWidthClass = layout === 'poster' 
+    ? 'w-[190px] sm:w-[220px]' 
+    : layout === 'channel'
+    ? 'w-[260px] sm:w-[300px]'
+    : 'w-[270px] sm:w-[320px]';
 
   return (
     <section className="w-full py-6 sm:py-8">
@@ -51,7 +59,7 @@ export const ContentSection: React.FC<ContentSectionProps> = ({
             {viewAllAction && (
               <button
                 onClick={viewAllAction}
-                className="text-xs text-cyan-400 hover:text-cyan-300 font-medium mr-2 cursor-pointer transition-colors"
+                className="text-xs text-amber-400 hover:text-amber-300 font-semibold mr-2 cursor-pointer transition-colors"
               >
                 Ver todos
               </button>
@@ -82,9 +90,9 @@ export const ContentSection: React.FC<ContentSectionProps> = ({
           {items.map((item) => (
             <div
               key={item.id}
-              className="w-[260px] sm:w-[300px] shrink-0 snap-start"
+              className={`${cardWidthClass} shrink-0 snap-start`}
             >
-              <ContentCard content={item} />
+              <ContentCard content={item} layout={layout} />
             </div>
           ))}
         </div>

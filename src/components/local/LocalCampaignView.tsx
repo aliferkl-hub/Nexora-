@@ -13,7 +13,7 @@ import {
   ArrowRight 
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { NexoraLogo } from '../brand/NexoraLogo';
+import { PizzaCineLogo } from '../brand/PizzaCineLogo';
 import { QRCodeSVG } from '../common/QRCodeSVG';
 
 export const LocalCampaignView: React.FC = () => {
@@ -21,35 +21,34 @@ export const LocalCampaignView: React.FC = () => {
 
   const campaignUrl = typeof window !== 'undefined' 
     ? `${window.location.origin}/?ref=${referralCode || 'BAIRRO-VIP'}` 
-    : 'https://nexoraplay.com.br';
+    : 'https://pizzacine.com.br';
 
   const handleShare = (network: string) => {
-    const text = encodeURIComponent(`Moradores e vizinhos: conheçam a NEXORA PLAY com desconto de condomínio! Filmes e canais em 4K HDR: ${campaignUrl}`);
+    const text = encodeURIComponent(`Moradores e vizinhos: conheçam o PIZZA CINE com desconto de condomínio! Filmes e séries em 4K HDR: ${campaignUrl}`);
     if (network === 'whatsapp') {
       window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
     } else {
       navigator.clipboard.writeText(campaignUrl);
-      alert('Link copiado para compartilhar no ' + network);
     }
   };
 
   return (
-    <div className="w-full py-12 sm:py-20 bg-[#06080F] min-h-[90vh]">
+    <div className="w-full py-12 sm:py-20 bg-[#080607] min-h-[90vh]">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Neighborhood & Condominium Header */}
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 text-xs font-mono mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-950/60 border border-rose-500/40 text-amber-300 text-xs font-mono mb-4">
             <Building2 className="w-3.5 h-3.5" />
             <span>CAMPANHA DE BAIRRO & CONDOMÍNIO RESIDENCIAL</span>
           </div>
 
           <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-white uppercase tracking-tight text-balance">
-            NEXORA PLAY NO SEU CONDOMÍNIO
+            PIZZA CINE NO SEU CONDOMÍNIO
           </h1>
 
           <p className="text-slate-300 text-sm sm:text-lg mt-4 leading-relaxed">
-            Internet sem travar e entretenimento premium na Smart TV para moradores e comerciantes locais. Ativação no mesmo instante com condição exclusiva.
+            Streaming premium na Smart TV para moradores e famílias. Ativação no mesmo instante com condição exclusiva e pagamento via PIX.
           </p>
         </div>
 

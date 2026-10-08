@@ -12,10 +12,14 @@ import {
   Globe, 
   Volume2, 
   Subtitles, 
-  UserCheck 
+  ShieldCheck,
+  Lock,
+  FileText
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { ContentCard } from '../home/ContentCard';
+import { StreamingImage } from '../common/StreamingImage';
+import { isContentPlayable, getRightsStatusInfo } from '../../utils/catalogValidation';
 
 export const MovieDetailPage: React.FC = () => {
   const { 
@@ -33,10 +37,12 @@ export const MovieDetailPage: React.FC = () => {
 
   const movie = selectedContentForDetail;
   const isFav = isFavorite(movie.id);
+  const playable = isContentPlayable(movie);
+  const rightsInfo = getRightsStatusInfo(movie.rightsStatus);
 
   // Related movies in same category or genre
   const related = contents
-    .filter((c) => c.id !== movie.id && c.type === 'movie' && !c.hidden)
+    .filter((c) => c.id !== movie.id && c.type === 'movie' && !c.hidden && !c.isDemo)
     .slice(0, 4);
 
   return (
@@ -44,16 +50,18 @@ export const MovieDetailPage: React.FC = () => {
       
       {/* Hero Backdrop Frame */}
       <div className="relative w-full h-[55vh] sm:h-[70vh] overflow-hidden bg-slate-950">
-        <img
-          src={movie.bannerUrl}
+        <StreamingImage
+          src={movie.bannerUrl || movie.posterUrl}
           alt={movie.title}
-          className="w-full h-full object-cover object-center scale-105"
+          type="movie"
+          aspect="banner"
+          imgClassName="scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#06080F] via-[#06080F]/70 to-[#06080F]/40" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#06080F] via-[#06080F]/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#06080F] via-[#06080F]/70 to-[#06080F]/40 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#06080F] via-[#06080F]/60 to-transparent pointer-events-none" />
 
         {/* Back navigation */}
-        <div className="absolute top-6 left-4 sm:left-8 z-10">
+        <div className="absolute top-6 left-4 sm:left-8 z-20">
           <button
             onClick={closeContentDetail}
             className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-black/60 hover:bg-black/80 border border-white/15 text-slate-300 hover:text-white text-xs font-semibold backdrop-blur-md transition-colors cursor-pointer"
@@ -70,13 +78,14 @@ export const MovieDetailPage: React.FC = () => {
           
           {/* Poster Column */}
           <div className="lg:col-span-4 flex justify-center lg:justify-start">
-            <div className="w-64 sm:w-72 aspect-[2/3] rounded-3xl overflow-hidden shadow-2xl shadow-cyan-950/40 border border-white/10 bg-slate-900 relative">
-              <img
+            <div className="w-64 sm:w-72 rounded-3xl overflow-hidden shadow-2xl shadow-cyan-950/40 border border-white/10 bg-slate-900 relative">
+              <StreamingImage
                 src={movie.posterUrl || movie.bannerUrl}
                 alt={movie.title}
-                className="w-full h-full object-cover"
+                type="movie"
+                aspect="poster"
               />
-              <div className="absolute top-3 left-3 px-2 py-0.5 rounded bg-cyan-400 text-slate-950 text-xs font-mono font-bold">
+              <div className="absolute top-3 left-3 px-2 py-0.5 rounded bg-cyan-400 text-slate-950 text-xs font-mono font-bold z-10">
                 {movie.audioSpecs?.[0] || '4K HDR'}
               </div>
             </div>
@@ -127,13 +136,20 @@ export const MovieDetailPage: React.FC = () => {
 
             {/* Action Buttons */}
             <div className="flex flex-wrap items-center gap-4 pt-4">
-              <button
-                onClick={() => openPlayer(movie)}
-                className="px-8 py-3.5 bg-gradient-to-r from-cyan-400 via-cyan-300 to-teal-300 text-slate-950 font-extrabold text-sm sm:text-base rounded-2xl shadow-xl shadow-cyan-500/25 hover:from-cyan-300 transition-all flex items-center gap-2.5 cursor-pointer transform active:scale-95"
-              >
-                <Play className="w-5 h-5 fill-slate-950" />
-                <span>ASSISTIR AGORA</span>
-              </button>
+              {playable ? (
+                <button
+                  onClick={() => openPlayer(movie)}
+                  className="px-8 py-3.5 bg-gradient-to-r from-cyan-400 via-cyan-300 to-teal-300 text-slate-950 font-extrabold text-sm sm:text-base rounded-2xl shadow-xl shadow-cyan-500/25 hover:from-cyan-300 transition-all flex items-center gap-2.5 cursor-pointer transform active:scale-95"
+                >
+                  <Play className="w-5 h-5 fill-slate-950" />
+                  <span>ASSISTIR AGORA</span>
+                </button>
+              ) : (
+                <div className="px-6 py-3.5 rounded-2xl bg-amber-950/40 border border-amber-500/40 text-amber-300 text-sm font-semibold flex items-center gap-2">
+                  <Lock className="w-4 h-4" />
+                  <span>Em Processo de Licenciamento (Disponível em Breve)</span>
+                </div>
+              )}
 
               <button
                 onClick={() => toggleFavorite(movie.id)}
@@ -147,7 +163,7 @@ export const MovieDetailPage: React.FC = () => {
                 <span>{isFav ? '✓ Na Minha Lista' : 'Adicionar à Minha Lista'}</span>
               </button>
 
-              {movie.trailerUrl && (
+              {movie.trailerUrl && playable && (
                 <button
                   onClick={() => openPlayer(movie)}
                   className="px-5 py-3.5 rounded-2xl bg-slate-900/80 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-white text-sm font-medium transition-colors flex items-center gap-2 cursor-pointer"
@@ -166,6 +182,38 @@ export const MovieDetailPage: React.FC = () => {
               <p className="text-sm text-slate-300 leading-relaxed max-w-3xl">
                 {movie.synopsis || movie.description}
               </p>
+            </div>
+
+            {/* Rights & Compliance Card */}
+            <div className="p-4 rounded-2xl bg-[#090D18] border border-white/8 space-y-2 mt-2">
+              <div className="flex items-center justify-between text-xs font-mono">
+                <span className="text-slate-400 flex items-center gap-1.5 font-bold uppercase">
+                  <ShieldCheck className="w-4 h-4 text-cyan-400" />
+                  Licenciamento e Distribuição
+                </span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-mono border ${rightsInfo.color}`}>
+                  {rightsInfo.label}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-300 font-mono pt-1">
+                {movie.distributor && (
+                  <div>
+                    <span className="text-slate-500 block text-[10px]">Distribuidora / Estúdio:</span>
+                    <span>{movie.distributor}</span>
+                  </div>
+                )}
+                {movie.availabilityStart && (
+                  <div>
+                    <span className="text-slate-500 block text-[10px]">Vigência de Exibição:</span>
+                    <span>{movie.availabilityStart} {movie.availabilityEnd ? `até ${movie.availabilityEnd}` : '(Contínua)'}</span>
+                  </div>
+                )}
+              </div>
+              {movie.licenseNotes && (
+                <p className="text-[11px] text-slate-400 font-mono pt-1 border-t border-white/5">
+                  Termo: {movie.licenseNotes}
+                </p>
+              )}
             </div>
 
             {/* Credits and Technical Specs */}
@@ -207,11 +255,11 @@ export const MovieDetailPage: React.FC = () => {
         {related.length > 0 && (
           <div className="mt-16 pt-10 border-t border-white/8">
             <h3 className="font-display font-bold text-xl text-white mb-6">
-              Títulos Relacionados
+              Mais Filmes Recomendados
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
               {related.map((rel) => (
-                <ContentCard key={rel.id} content={rel} />
+                <ContentCard key={rel.id} content={rel} layout="poster" />
               ))}
             </div>
           </div>

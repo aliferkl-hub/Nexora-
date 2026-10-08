@@ -9,11 +9,12 @@ export const FloatingSupport: React.FC = () => {
   const [ticketMsg, setTicketMsg] = useState('');
   const [ticketSent, setTicketSent] = useState(false);
 
-  const cleanWhatsAppNumber = adminConfig.supportWhatsApp.replace(/\D/g, '');
+  const cleanWhatsAppNumber = (adminConfig.supportWhatsApp || '11973479473').replace(/\D/g, '');
 
   const openWhatsApp = () => {
-    const text = encodeURIComponent('Olá! Gostaria de falar com o suporte oficial da NEXORA PLAY sobre planos e ativação.');
-    window.open(`https://api.whatsapp.com/send?phone=${cleanWhatsAppNumber}&text=${text}`, '_blank');
+    const text = encodeURIComponent('Olá! Gostaria de falar com o suporte oficial do PIZZA CINE sobre planos e ativação.');
+    const finalNumber = cleanWhatsAppNumber.startsWith('55') ? cleanWhatsAppNumber : `55${cleanWhatsAppNumber}`;
+    window.open(`https://wa.me/${finalNumber}?text=${text}`, '_blank');
   };
 
   const handleSendTicket = (e: React.FormEvent) => {
@@ -30,12 +31,12 @@ export const FloatingSupport: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-40">
+    <div className="fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-40">
       {/* Floating Trigger Button */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="group flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-bold text-xs uppercase tracking-wider shadow-2xl shadow-cyan-500/40 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+          className="group flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-rose-600 via-red-600 to-amber-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-2xl shadow-rose-950/60 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-amber-300/30"
           aria-label="Abrir central de ajuda"
         >
           <div className="w-2 h-2 rounded-full bg-emerald-300 animate-ping" />
@@ -45,16 +46,16 @@ export const FloatingSupport: React.FC = () => {
 
       {/* Floating Support Modal Window */}
       {isOpen && (
-        <div className="w-[320px] sm:w-[360px] rounded-3xl bg-[#090D18] border border-cyan-500/30 p-5 shadow-2xl backdrop-blur-xl animate-fadeIn flex flex-col gap-4">
+        <div className="w-[320px] sm:w-[360px] rounded-3xl bg-[#0C090A] border border-rose-500/30 p-5 shadow-2xl backdrop-blur-xl animate-fadeIn flex flex-col gap-4">
           
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/8 pb-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-cyan-950 flex items-center justify-center text-cyan-400">
+              <div className="w-8 h-8 rounded-lg bg-rose-950/80 flex items-center justify-center text-rose-400">
                 <MessageCircle className="w-4 h-4" />
               </div>
               <div>
-                <h4 className="font-display font-bold text-sm text-white">Central NEXORA</h4>
+                <h4 className="font-display font-bold text-sm text-white">Central Pizza Cine</h4>
                 <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-mono">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                   <span>Suporte Humano Ativo</span>
@@ -87,9 +88,9 @@ export const FloatingSupport: React.FC = () => {
                 const el = document.getElementById('faq');
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="p-3 rounded-xl bg-slate-900 border border-white/8 hover:bg-slate-800 text-slate-300 flex flex-col items-center text-center gap-1 transition-colors cursor-pointer"
+              className="p-3 rounded-xl bg-black/60 border border-white/8 hover:bg-white/5 text-slate-300 flex flex-col items-center text-center gap-1 transition-colors cursor-pointer"
             >
-              <HelpCircle className="w-4 h-4 text-cyan-400" />
+              <HelpCircle className="w-4 h-4 text-amber-400" />
               <span className="font-semibold text-[11px]">Ver FAQ Completo</span>
             </button>
           </div>
@@ -110,7 +111,7 @@ export const FloatingSupport: React.FC = () => {
                 placeholder="Seu nome ou assunto..."
                 value={ticketSubject}
                 onChange={(e) => setTicketSubject(e.target.value)}
-                className="w-full p-2 bg-slate-900 border border-white/10 rounded-lg text-white text-xs placeholder-slate-500 focus:outline-none focus:border-cyan-400"
+                className="w-full p-2 bg-slate-900 border border-white/10 rounded-lg text-white text-xs placeholder-slate-500 focus:outline-none focus:border-rose-500"
               />
               <textarea
                 required
@@ -118,11 +119,11 @@ export const FloatingSupport: React.FC = () => {
                 placeholder="Como podemos te ajudar hoje?"
                 value={ticketMsg}
                 onChange={(e) => setTicketMsg(e.target.value)}
-                className="w-full p-2 bg-slate-900 border border-white/10 rounded-lg text-white text-xs placeholder-slate-500 focus:outline-none focus:border-cyan-400 resize-none"
+                className="w-full p-2 bg-slate-900 border border-white/10 rounded-lg text-white text-xs placeholder-slate-500 focus:outline-none focus:border-rose-500 resize-none"
               />
               <button
                 type="submit"
-                className="w-full py-2 bg-cyan-400 text-slate-950 font-bold text-xs rounded-lg hover:bg-cyan-300 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full py-2 bg-gradient-to-r from-rose-600 via-red-600 to-amber-500 text-white font-extrabold text-xs rounded-lg hover:from-rose-500 hover:to-amber-400 transition-colors flex items-center justify-center gap-1.5 cursor-pointer border border-amber-300/30"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>Enviar Dúvida</span>
@@ -132,8 +133,8 @@ export const FloatingSupport: React.FC = () => {
 
           {/* Footer note */}
           <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-slate-400 font-mono">
-            <span>Tel: {adminConfig.supportPhone}</span>
-            <span>{adminConfig.supportEmail}</span>
+            <span>Tel: +55 11 97347-9473</span>
+            <span>suporte@pizzacine.com.br</span>
           </div>
 
         </div>

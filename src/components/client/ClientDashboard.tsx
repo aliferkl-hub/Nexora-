@@ -15,10 +15,12 @@ import {
   HelpCircle,
   Clock,
   Sparkles,
-  Receipt
+  Receipt,
+  MessageCircle
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { ContentCard } from '../home/ContentCard';
+import { getWhatsAppProofUrl, OFFICIAL_PIX_CONFIG } from '../../utils/pixHelper';
 
 export const ClientDashboard: React.FC = () => {
   const { 
@@ -43,14 +45,14 @@ export const ClientDashboard: React.FC = () => {
 
   if (!currentUser) {
     return (
-      <div className="w-full py-16 sm:py-24 bg-[#06080F] min-h-[85vh] flex items-center justify-center">
-        <div className="max-w-md w-full mx-4 p-8 rounded-3xl bg-[#090D18] border border-white/10 shadow-2xl">
+      <div className="w-full py-16 sm:py-24 bg-[#080607] min-h-[85vh] flex items-center justify-center">
+        <div className="max-w-md w-full mx-4 p-8 rounded-3xl bg-[#0C090A] border border-white/10 shadow-2xl">
           <div className="text-center mb-6">
-            <span className="text-xs font-mono text-cyan-400 uppercase tracking-widest font-semibold">
+            <span className="text-xs font-mono text-amber-400 uppercase tracking-widest font-semibold">
               ÁREA EXCLUSIVA DE ASSINANTES
             </span>
             <h1 className="font-display font-extrabold text-2xl text-white uppercase mt-1">
-              MEU NEXORA
+              MEU PIZZA CINE
             </h1>
             <p className="text-xs text-slate-400 mt-1">
               Acesse sua conta para gerenciar planos, favoritos e dispositivos.
@@ -102,15 +104,15 @@ export const ClientDashboard: React.FC = () => {
 
               <button
                 type="submit"
-                className="w-full py-3 bg-gradient-to-r from-cyan-400 to-cyan-300 text-slate-950 font-bold text-xs sm:text-sm rounded-xl hover:from-cyan-300 transition-all cursor-pointer shadow-md shadow-cyan-500/20"
+                className="w-full py-3 bg-gradient-to-r from-rose-600 via-red-600 to-amber-500 text-white font-extrabold text-xs sm:text-sm rounded-xl hover:from-rose-500 hover:to-amber-400 transition-all cursor-pointer shadow-md shadow-rose-950/40 border border-amber-300/30"
               >
-                Acessar Meu Nexora
+                Acessar Meu Pizza Cine
               </button>
 
               <button
                 type="button"
                 onClick={() => loginUser('alifergael76@gmail.com')}
-                className="w-full py-2.5 bg-slate-800 text-cyan-300 border border-cyan-500/30 font-medium text-xs rounded-xl hover:bg-slate-700 transition-colors"
+                className="w-full py-2.5 bg-slate-800 text-amber-300 border border-amber-500/30 font-medium text-xs rounded-xl hover:bg-slate-700 transition-colors cursor-pointer"
               >
                 Entrar com Conta Titular (alifergael76@gmail.com)
               </button>
@@ -181,6 +183,7 @@ export const ClientDashboard: React.FC = () => {
   // Active plan lookup
   const userPlan = plans.find((p) => p.id === currentUser.currentPlanId) || plans[1];
   const isSubActive = currentUser.subscriptionStatus === 'active';
+  const isSubPending = currentUser.subscriptionStatus === 'pending';
 
   // Get favorite contents
   const favoriteContents = contents.filter((c) => currentUser.favorites.includes(c.id));
@@ -198,8 +201,8 @@ export const ClientDashboard: React.FC = () => {
         {/* Welcome Banner */}
         <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-[#0C1222] via-[#091020] to-[#070A14] border border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-10 shadow-xl">
           <div>
-            <div className="flex items-center gap-2 text-xs font-mono text-cyan-400 uppercase tracking-widest mb-1">
-              <span>MEU NEXORA</span>
+            <div className="flex items-center gap-2 text-xs font-mono text-amber-400 uppercase tracking-widest mb-1">
+              <span>MEU PIZZA CINE</span>
               <span aria-hidden="true" className="text-slate-600">·</span>
               <span className="text-slate-300">PAINEL DO ASSINANTE</span>
             </div>
@@ -236,6 +239,35 @@ export const ClientDashboard: React.FC = () => {
           </div>
         </div>
 
+        {/* Pending payment banner notice */}
+        {isSubPending && (
+          <div className="mb-8 p-5 rounded-2xl bg-amber-950/50 border border-amber-500/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                <Clock className="w-5 h-5 animate-pulse" />
+              </div>
+              <div>
+                <span className="font-bold text-sm text-amber-300 block">
+                  PAGAMENTO AGUARDANDO CONFIRMAÇÃO
+                </span>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  Seu pedido do {userPlan.name} está registrado. Para ativação imediata, envie seu comprovante Pix via WhatsApp.
+                </p>
+              </div>
+            </div>
+
+            <a
+              href={getWhatsAppProofUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-2 transition-all shadow-md shrink-0 cursor-pointer"
+            >
+              <MessageCircle className="w-4 h-4 fill-slate-950" />
+              <span>ENVIAR COMPROVANTE NO WHATSAPP</span>
+            </a>
+          </div>
+        )}
+
         {/* Dashboard Columns */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
           
@@ -249,9 +281,11 @@ export const ClientDashboard: React.FC = () => {
                 <span className={`text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full ${
                   isSubActive
                     ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                    : 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
+                    : isSubPending
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                    : 'bg-red-500/20 text-red-400 border border-red-500/40'
                 }`}>
-                  {isSubActive ? 'ASSINATURA ATIVA' : 'EXPIRADA / PENDENTE'}
+                  {isSubActive ? 'ASSINATURA ATIVA' : isSubPending ? 'PAGAMENTO AGUARDANDO CONFIRMAÇÃO' : 'EXPIRADA / PENDENTE'}
                 </span>
               </div>
 

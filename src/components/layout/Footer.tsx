@@ -1,6 +1,6 @@
 import React from 'react';
 import { ShieldCheck, Lock, Heart, MessageCircle, HelpCircle } from 'lucide-react';
-import { NexoraLogo } from '../brand/NexoraLogo';
+import { PizzaCineLogo } from '../brand/PizzaCineLogo';
 import { useApp } from '../../context/AppContext';
 import { ActiveView } from '../../types';
 
@@ -13,7 +13,7 @@ export const Footer: React.FC = () => {
   };
 
   return (
-    <footer className="w-full bg-[#04060C] border-t border-white/5 pt-16 pb-12 text-slate-400 text-xs">
+    <footer className="w-full bg-[#050304] border-t border-white/5 pt-16 pb-12 text-slate-400 text-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Main Footer Grid */}
@@ -21,10 +21,10 @@ export const Footer: React.FC = () => {
           
           {/* Brand Col */}
           <div className="lg:col-span-2 space-y-4">
-            <NexoraLogo size="md" withSlogan />
+            <PizzaCineLogo size="md" withSlogan />
             
             <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
-              NEXORA PLAY é uma plataforma de streaming premium com tecnologia de ultra-baixa latência e catálogo 100% autorizado. Qualidade 4K HDR e som imersivo Dolby Atmos para todos os seus dispositivos.
+              PIZZA CINE é uma plataforma de marketing e streaming premium que combina o sabor e a paixão pelo cinema com entretenimento 4K HDR, som imersivo e catálogo 100% homologado.
             </p>
 
             <div className="flex items-center gap-3 pt-2">
@@ -32,8 +32,8 @@ export const Footer: React.FC = () => {
                 <ShieldCheck className="w-3.5 h-3.5" />
                 Catálogo Homologado
               </span>
-              <span className="flex items-center gap-1.5 text-slate-300 font-mono text-[11px] bg-slate-900 border border-white/10 px-2.5 py-1 rounded-lg">
-                <Lock className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="flex items-center gap-1.5 text-slate-300 font-mono text-[11px] bg-black/60 border border-white/10 px-2.5 py-1 rounded-lg">
+                <Lock className="w-3.5 h-3.5 text-amber-400" />
                 SSL 256-bit Seguro
               </span>
             </div>
@@ -46,27 +46,37 @@ export const Footer: React.FC = () => {
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
-                <button onClick={() => handleNav('home')} className="hover:text-cyan-400 transition-colors">
+                <button onClick={() => handleNav('home')} className="hover:text-rose-400 transition-colors">
                   Início
                 </button>
               </li>
               <li>
-                <button onClick={() => handleNav('catalog')} className="hover:text-cyan-400 transition-colors">
-                  Catálogo Completo
+                <button onClick={() => handleNav('films')} className="hover:text-rose-400 transition-colors">
+                  Filmes em 4K
                 </button>
               </li>
               <li>
-                <button onClick={() => handleNav('plans')} className="hover:text-cyan-400 transition-colors">
+                <button onClick={() => handleNav('series')} className="hover:text-rose-400 transition-colors">
+                  Séries
+                </button>
+              </li>
+              <li>
+                <button onClick={() => handleNav('trending')} className="hover:text-rose-400 transition-colors">
+                  Em Alta
+                </button>
+              </li>
+              <li>
+                <button onClick={() => handleNav('plans')} className="hover:text-rose-400 transition-colors">
                   Planos e Preços
                 </button>
               </li>
               <li>
-                <button onClick={() => handleNav('client')} className="hover:text-cyan-400 transition-colors">
-                  Meu Nexora (Área do Cliente)
+                <button onClick={() => handleNav('client')} className="hover:text-rose-400 transition-colors">
+                  Meu Pizza Cine (Área do Cliente)
                 </button>
               </li>
               <li>
-                <button onClick={() => handleNav('admin')} className="text-slate-500 hover:text-cyan-400 transition-colors">
+                <button onClick={() => handleNav('admin')} className="text-slate-500 hover:text-rose-400 transition-colors">
                   Painel Master Owner
                 </button>
               </li>
@@ -80,23 +90,23 @@ export const Footer: React.FC = () => {
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
-                <button onClick={() => handleNav('local-campaign')} className="hover:text-cyan-400 transition-colors text-left">
-                  Indique a Nexora (Condomínios)
+                <button onClick={() => handleNav('local-campaign')} className="hover:text-amber-400 transition-colors text-left">
+                  Pizza Cine no Condomínio
                 </button>
               </li>
               <li>
-                <button onClick={() => handleNav('marketing-kit')} className="hover:text-cyan-400 transition-colors text-left">
+                <button onClick={() => handleNav('marketing-kit')} className="hover:text-amber-400 transition-colors text-left">
                   Kit Oficial de Marketing
                 </button>
               </li>
               <li>
-                <button onClick={() => handleNav('marketing-kit')} className="hover:text-cyan-400 transition-colors text-left">
+                <button onClick={() => handleNav('marketing-kit')} className="hover:text-amber-400 transition-colors text-left">
                   Gerador de Link de Indicação
                 </button>
               </li>
               <li>
-                <button onClick={() => handleNav('plans')} className="text-cyan-400 font-semibold hover:underline">
-                  Oferta Pague 2 Leve 3
+                <button onClick={() => handleNav('plans')} className="text-amber-400 font-semibold hover:underline">
+                  Oferta Anual Especial PIX
                 </button>
               </li>
             </ul>
@@ -109,28 +119,28 @@ export const Footer: React.FC = () => {
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
-                <button onClick={() => handleNav('about')} className="hover:text-cyan-400 transition-colors">
-                  Sobre a Nexora Play
+                <button onClick={() => handleNav('about')} className="hover:text-rose-400 transition-colors">
+                  Sobre o Pizza Cine
                 </button>
               </li>
               <li>
-                <button onClick={() => handleNav('licenses')} className="hover:text-cyan-400 transition-colors text-left">
+                <button onClick={() => handleNav('licenses')} className="hover:text-rose-400 transition-colors text-left">
                   Direitos & Licenciamento
                 </button>
               </li>
               <li>
-                <button onClick={() => handleNav('terms')} className="hover:text-cyan-400 transition-colors">
+                <button onClick={() => handleNav('terms')} className="hover:text-rose-400 transition-colors">
                   Termos de Uso
                 </button>
               </li>
               <li>
-                <button onClick={() => handleNav('privacy')} className="hover:text-cyan-400 transition-colors">
+                <button onClick={() => handleNav('privacy')} className="hover:text-rose-400 transition-colors">
                   Política de Privacidade
                 </button>
               </li>
               <li>
                 <span className="text-slate-400 block pt-1 font-mono text-[11px]">
-                  WhatsApp: {adminConfig.supportWhatsApp}
+                  WhatsApp: +55 11 97347-9473
                 </span>
               </li>
             </ul>
@@ -141,7 +151,7 @@ export const Footer: React.FC = () => {
         {/* Bottom Quiet Legal Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-400">
           <div>
-            © {new Date().getFullYear()} NEXORA PLAY ENTRETENIMENTO S.A. Todos os direitos reservados.
+            © {new Date().getFullYear()} PIZZA CINE ENTRETENIMENTO S.A. Todos os direitos reservados.
           </div>
 
           <div className="flex items-center gap-4">

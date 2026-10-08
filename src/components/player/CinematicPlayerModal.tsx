@@ -229,7 +229,7 @@ export const CinematicPlayerModal: React.FC = () => {
                 Este conteúdo está temporariamente indisponível ou em processamento.
               </h3>
               <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                A fonte de transmissão autorizada está em validação ou sendo processada pelos servidores da NEXORA.
+                A fonte de transmissão autorizada está em validação ou sendo processada pelos servidores do PIZZA CINE.
               </p>
             </div>
             <div className="flex gap-3 w-full mt-2">
@@ -242,7 +242,7 @@ export const CinematicPlayerModal: React.FC = () => {
                     videoRef.current.play().catch(() => setHasError(true));
                   }
                 }}
-                className="flex-1 py-2.5 rounded-xl bg-cyan-400 text-slate-950 font-bold text-xs hover:bg-cyan-300 transition-colors"
+                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-amber-500 text-white font-bold text-xs hover:from-rose-500 hover:to-amber-400 transition-colors"
               >
                 Tentar Novamente
               </button>
@@ -260,8 +260,8 @@ export const CinematicPlayerModal: React.FC = () => {
         {isLoading && !hasError && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 pointer-events-none">
             <div className="flex flex-col items-center gap-3">
-              <Loader2 className="w-10 h-10 text-cyan-400 animate-spin" />
-              <span className="text-xs font-mono text-cyan-300 tracking-wider">
+              <Loader2 className="w-10 h-10 text-rose-500 animate-spin" />
+              <span className="text-xs font-mono text-amber-300 tracking-wider">
                 Carregando sinal...
               </span>
             </div>
@@ -276,7 +276,7 @@ export const CinematicPlayerModal: React.FC = () => {
         >
           <div className="flex items-center gap-3">
             <span className="font-display font-extrabold text-white text-lg tracking-wider">
-              NEXORA <span className="text-cyan-400">STREAM</span>
+              PIZZA <span className="text-rose-500">CINE</span>
             </span>
             <span className="hidden sm:inline-block text-slate-600">·</span>
             

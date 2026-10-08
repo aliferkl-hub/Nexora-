@@ -14,7 +14,7 @@ import {
   Compass
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { NexoraLogo } from '../brand/NexoraLogo';
+import { PizzaCineLogo } from '../brand/PizzaCineLogo';
 import { QRCodeSVG } from '../common/QRCodeSVG';
 
 export const MarketingKitView: React.FC = () => {
@@ -22,8 +22,8 @@ export const MarketingKitView: React.FC = () => {
   const [copiedLink, setCopiedLink] = useState(false);
   const [selectedFormat, setSelectedFormat] = useState<'stories' | 'feed' | 'facebook' | 'flyer' | 'whatsapp'>('stories');
 
-  const originUrl = typeof window !== 'undefined' ? window.location.origin : 'https://nexoraplay.com.br';
-  const customReferralUrl = `${originUrl}/?ref=${referralCode}`;
+  const originUrl = typeof window !== 'undefined' ? window.location.origin : 'https://pizzacine.com.br';
+  const customReferralUrl = `${originUrl}/?ref=${referralCode || 'PIZZA-VIP'}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(customReferralUrl);
@@ -33,35 +33,35 @@ export const MarketingKitView: React.FC = () => {
   };
 
   const handleShareWhatsApp = () => {
-    const text = encodeURIComponent(`Conheça a NEXORA PLAY: Filmes, séries e canais em 4K HDR. Assine 3 meses e ganhe 1 mês grátis! Acesse: ${customReferralUrl}`);
+    const text = encodeURIComponent(`Conheça o PIZZA CINE: Filmes e séries em 4K HDR. O sabor do cinema chegou! Acesse: ${customReferralUrl}`);
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
 
   return (
-    <div className="w-full py-12 sm:py-20 bg-[#06080F] min-h-[90vh]">
+    <div className="w-full py-12 sm:py-20 bg-[#080607] min-h-[90vh]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Hero Headline specified by user */}
         <div className="text-center max-w-3xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 text-xs font-mono mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-950/60 border border-rose-500/30 text-amber-300 text-xs font-mono mb-4">
             <Sparkles className="w-3.5 h-3.5" />
             <span>KIT OFICIAL DE MARKETING & AFILIADOS</span>
           </div>
 
           <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-white uppercase tracking-tight text-balance">
-            ENTRETENIMENTO PREMIUM SEM COMPLICAÇÃO.
+            O SABOR DO CINEMA NA SUA TELA.
           </h1>
 
           <p className="text-slate-300 text-sm sm:text-base mt-4 leading-relaxed">
-            Compartilhe o universo NEXORA com amigos, condomínios ou nas suas redes sociais e acumule vantagens e mensalidades gratuitas.
+            Compartilhe o PIZZA CINE com amigos, condomínios ou nas suas redes sociais e acumule vantagens e mensalidades gratuitas.
           </p>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
             <button
               onClick={() => startCheckoutForPlan('trimestral')}
-              className="px-6 py-3.5 bg-gradient-to-r from-cyan-400 to-cyan-300 text-slate-950 font-extrabold text-sm rounded-xl shadow-lg shadow-cyan-500/25 hover:from-cyan-300 transition-all cursor-pointer"
+              className="px-6 py-3.5 bg-gradient-to-r from-rose-600 via-red-600 to-amber-500 text-white font-extrabold text-sm rounded-xl shadow-lg shadow-rose-950/40 hover:from-rose-500 hover:to-amber-400 transition-all cursor-pointer border border-amber-300/30"
             >
-              QUERO SER NEXORA
+              QUERO SER PIZZA CINE
             </button>
             <button
               onClick={handleCopyLink}
@@ -144,15 +144,15 @@ export const MarketingKitView: React.FC = () => {
             
             {/* 9:16 Stories / TikTok Mockup */}
             {selectedFormat === 'stories' && (
-              <div className="w-[280px] sm:w-[320px] aspect-[9/16] rounded-3xl bg-gradient-to-b from-[#090D18] via-[#04060C] to-[#0A1424] border-2 border-cyan-500/40 p-6 flex flex-col justify-between text-center shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
+              <div className="w-[280px] sm:w-[320px] aspect-[9/16] rounded-3xl bg-gradient-to-b from-[#0F0A0C] via-[#050304] to-[#1A0B10] border-2 border-rose-500/40 p-6 flex flex-col justify-between text-center shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-40 h-40 bg-rose-500/10 rounded-full blur-2xl pointer-events-none" />
                 <div>
-                  <NexoraLogo size="md" variant="stacked" className="mx-auto mt-2" />
-                  <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest block mt-4">
-                    CINEMA NA SUA CASA
+                  <PizzaCineLogo size="md" variant="stacked" className="mx-auto mt-2" />
+                  <span className="text-[10px] font-mono text-amber-400 uppercase tracking-widest block mt-4">
+                    O SABOR DO CINEMA
                   </span>
                   <h3 className="font-display font-extrabold text-xl text-white uppercase mt-1 leading-tight">
-                    ASSINE 3 MESES<br />E GANHE 1 MÊS!
+                    SEU FILME FAVORITO.<br />DO SEU JEITO.
                   </h3>
                 </div>
 
@@ -160,17 +160,17 @@ export const MarketingKitView: React.FC = () => {
                   <div className="inline-block p-2 rounded-2xl bg-white shadow-xl">
                     <QRCodeSVG value={customReferralUrl} size={130} />
                   </div>
-                  <span className="text-[11px] text-cyan-300 font-mono block mt-2">
+                  <span className="text-[11px] text-amber-300 font-mono block mt-2">
                     Aponte a câmera e comece a assistir
                   </span>
                 </div>
 
                 <div>
                   <div className="text-[10px] text-slate-400 mb-2">
-                    Filmes · Séries · Canais Ao Vivo · 4K HDR
+                    Filmes · Séries · 4K HDR · Sem Travamentos
                   </div>
-                  <div className="py-2.5 px-4 rounded-xl bg-cyan-400 text-slate-950 font-bold text-xs uppercase shadow-md">
-                    nexoraplay.com.br
+                  <div className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-rose-600 via-red-600 to-amber-500 text-white font-extrabold text-xs uppercase shadow-md border border-amber-300/30">
+                    pizzacine.com.br
                   </div>
                 </div>
               </div>
@@ -178,15 +178,15 @@ export const MarketingKitView: React.FC = () => {
 
             {/* 1:1 Feed Post Mockup */}
             {selectedFormat === 'feed' && (
-              <div className="w-[300px] sm:w-[360px] aspect-square rounded-3xl bg-[#080D1A] border-2 border-cyan-500/40 p-6 flex flex-col justify-between text-center shadow-2xl relative">
+              <div className="w-[300px] sm:w-[360px] aspect-square rounded-3xl bg-[#0D090B] border-2 border-rose-500/40 p-6 flex flex-col justify-between text-center shadow-2xl relative">
                 <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                  <NexoraLogo size="sm" />
+                  <PizzaCineLogo size="sm" />
                   <span className="text-[10px] font-mono text-emerald-400">100% Homologado</span>
                 </div>
 
                 <div>
                   <h3 className="font-display font-extrabold text-xl text-white uppercase">
-                    SEU ENTRETENIMENTO.<br />DO SEU JEITO.
+                    SEU FILME FAVORITO.<br />SUA SÉRIE FAVORITA.
                   </h3>
                   <p className="text-xs text-slate-300 mt-1">
                     Sem travamentos. Qualidade 4K Ultra HD & Dolby Atmos.
@@ -196,13 +196,13 @@ export const MarketingKitView: React.FC = () => {
                 <div className="flex items-center justify-center gap-4 py-2">
                   <QRCodeSVG value={customReferralUrl} size={100} />
                   <div className="text-left text-xs">
-                    <span className="text-cyan-400 font-mono font-bold block">PLANO TRIMESTRAL</span>
-                    <span className="text-white font-display font-extrabold text-lg">Pague 2, Leve 3</span>
-                    <span className="text-slate-400 text-[11px] block mt-0.5">Ativação imediata via PIX</span>
+                    <span className="text-amber-400 font-mono font-bold block">PLANO ANUAL ESPECIAL</span>
+                    <span className="text-white font-display font-extrabold text-lg">Chave Pix Oficial</span>
+                    <span className="text-slate-400 text-[11px] block mt-0.5">Ativação imediata via WhatsApp</span>
                   </div>
                 </div>
 
-                <div className="py-2 px-3 rounded-xl bg-slate-900 border border-white/10 text-cyan-300 text-xs font-mono">
+                <div className="py-2 px-3 rounded-xl bg-slate-900 border border-white/10 text-amber-300 text-xs font-mono">
                   {customReferralUrl}
                 </div>
               </div>
@@ -213,7 +213,7 @@ export const MarketingKitView: React.FC = () => {
               <div className="w-[300px] sm:w-[360px] aspect-[1/1.4] rounded-2xl bg-white text-slate-950 p-6 flex flex-col justify-between shadow-2xl relative">
                 <div className="border-b-2 border-slate-900 pb-3 text-center">
                   <span className="font-display font-black text-2xl text-slate-950 tracking-wider">
-                    NEXORA <span className="text-cyan-600">PLAY</span>
+                    PIZZA <span className="text-rose-600">CINE</span>
                   </span>
                   <span className="text-[11px] font-bold text-slate-600 block uppercase">
                     Streaming Premium para Moradores e Parceiros

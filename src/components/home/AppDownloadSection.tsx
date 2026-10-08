@@ -35,18 +35,18 @@ export const AppDownloadSection: React.FC = () => {
       isAppStoreLive: false,
       storeNotice: 'Aplicativo dedicado para lojas de TV em breve',
       icon: Tv,
-      instructions: 'Abra o navegador de internet da sua TV (Internet Browser), digite o endereço nexoraplay.com.br e faça login na sua conta.'
+      instructions: 'Abra o navegador de internet da sua TV (Internet Browser), acesse a plataforma e faça login na sua conta.'
     }
   ];
 
   return (
-    <section className="w-full py-16 sm:py-20 bg-[#06080F]">
+    <section className="w-full py-16 sm:py-20 bg-[#070506]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
         <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 mb-12">
           <div>
-            <div className="flex items-center gap-2 text-xs font-mono text-cyan-400 uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-xs font-mono text-amber-400 uppercase tracking-widest">
               <span>DISPOSITIVOS SUPORTADOS</span>
               <span aria-hidden="true" className="text-slate-600">·</span>
               <span className="text-slate-300">MULTIPLATAFORMA</span>
@@ -122,18 +122,18 @@ export const AppDownloadSection: React.FC = () => {
               Acesse no Celular ou TV
             </h3>
             <p className="text-xs text-slate-400 mt-1 mb-6">
-              Aponte a câmera do seu smartphone para o QR Code abaixo para abrir instantaneamente a NEXORA PLAY.
+              Aponte a câmera do seu smartphone para o QR Code abaixo para abrir instantaneamente o PIZZA CINE.
             </p>
 
             <div className="flex justify-center mb-6">
               <QRCodeSVG 
-                value={typeof window !== 'undefined' ? window.location.href : 'https://nexoraplay.com.br'} 
+                value={typeof window !== 'undefined' ? window.location.href : 'https://pizzacine.com.br'} 
                 size={190} 
               />
             </div>
 
-            <p className="text-xs text-cyan-300 font-mono mb-6">
-              {typeof window !== 'undefined' ? window.location.origin : 'nexoraplay.com.br'}
+            <p className="text-xs text-amber-300 font-mono mb-6">
+              {typeof window !== 'undefined' ? window.location.origin : 'pizzacine.com.br'}
             </p>
 
             <button

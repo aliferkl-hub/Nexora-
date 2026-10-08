@@ -2,6 +2,10 @@ export type ContentType = 'movie' | 'series' | 'channel' | 'documentary';
 
 export type AgeRating = 'L' | '10' | '12' | '14' | '16' | '18';
 
+export type RightsStatus = 'licensed' | 'owned' | 'authorized' | 'pending' | 'unavailable';
+
+export type AvailabilityStatus = 'available' | 'coming_soon' | 'unavailable' | 'licensed' | 'metadata_only';
+
 export interface Episode {
   id: string;
   seasonNumber: number;
@@ -43,6 +47,7 @@ export interface ContentItem {
   synopsis?: string;
   bannerUrl: string;
   posterUrl: string;
+  logoUrl?: string; // Specific channel logo
   videoUrl?: string;
   trailerUrl?: string;
   audioSpecs?: string[]; // e.g. ["4K HDR", "Dolby Atmos", "5.1 Surround"]
@@ -62,6 +67,7 @@ export interface ContentItem {
   subtitles?: string[];
   isTrending?: boolean; // 🔥 Em Alta
   isNewRelease?: boolean; // 🆕 Lançamentos
+  isTopWatched?: boolean; // ⭐ Mais Assistido
   releaseDate?: string;
   dateAdded?: string;
   seasons?: Season[]; // For Series
@@ -69,6 +75,15 @@ export interface ContentItem {
   channelNumber?: string;
   broadcastStatus?: 'online' | 'offline' | 'scheduled';
   status?: 'published' | 'processing' | 'archived' | 'coming_soon';
+  
+  // Licensing & Rights Compliance
+  rightsStatus: RightsStatus; // 'licensed' | 'owned' | 'authorized' | 'pending' | 'unavailable'
+  availabilityStatus: AvailabilityStatus; // 'available' | 'coming_soon' | 'unavailable' | 'licensed' | 'metadata_only'
+  availabilityStart?: string;
+  availabilityEnd?: string;
+  licenseNotes?: string;
+  distributor?: string;
+  isDemo?: boolean; // Distinguishes test/demo items from production catalog
 }
 
 export interface PlanConfig {
@@ -129,6 +144,31 @@ export interface AdminPlatformConfig {
   syncLogs?: CatalogSyncLog[];
 }
 
+export type PaymentOrderStatus = 
+  | 'waiting_payment'       // Aguardando pagamento
+  | 'proof_received'        // Comprovante recebido
+  | 'payment_confirmed'     // Pagamento confirmado
+  | 'plan_activated'        // Plano ativado
+  | 'payment_rejected';     // Pagamento recusado
+
+export interface PaymentOrder {
+  id: string;
+  date: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  planId: string;
+  planName: string;
+  amount: number;
+  paymentMethod: 'PIX' | 'Cartão de Crédito' | 'Boleto';
+  pixKey: string;
+  status: PaymentOrderStatus;
+  transactionId: string;
+  notes?: string;
+  proofSentAt?: string;
+  activatedAt?: string;
+}
+
 export interface UserDevice {
   id: string;
   name: string;
@@ -143,7 +183,7 @@ export interface InvoiceItem {
   date: string;
   planName: string;
   amount: number;
-  status: 'paid' | 'pending' | 'canceled';
+  status: 'paid' | 'pending' | 'canceled' | PaymentOrderStatus;
   paymentMethod: 'PIX' | 'Cartão de Crédito' | 'Boleto';
   transactionId: string;
 }
@@ -170,6 +210,7 @@ export interface UserAccount {
   subscriptionValidUntil?: string;
   autoRenew: boolean;
   paymentMethod?: string;
+  pendingOrderStatus?: PaymentOrderStatus;
   favorites: string[];
   continueWatching: ContinueWatchingItem[];
   devices: UserDevice[];
@@ -183,6 +224,10 @@ export type ActiveView =
   | 'catalog'
   | 'films'
   | 'series'
+  | 'genres'
+  | 'trending'
+  | 'releases'
+  | 'mylist'
   | 'live-tv'
   | 'movie-detail'
   | 'series-detail'

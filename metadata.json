@@ -1,6 +1,6 @@
 {
-  "name": "NEXORA PLAY",
-  "description": "Plataforma de entretenimento e streaming premium. Filmes, séries, canais ao vivo autorizados e muito mais. Seu entretenimento, do seu jeito.",
+  "name": "PIZZA CINE",
+  "description": "Seu filme favorito. Sua série favorita. Do seu jeito. Plataforma de marketing e streaming premium com produções e filmes em 4K.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

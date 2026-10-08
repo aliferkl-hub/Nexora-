@@ -15,7 +15,9 @@ import { MasterOwnerDashboard } from './components/admin/MasterOwnerDashboard';
 import { MarketingKitView } from './components/marketing/MarketingKitView';
 import { LocalCampaignView } from './components/local/LocalCampaignView';
 import { CinematicPlayerModal } from './components/player/CinematicPlayerModal';
+import { AnnualPlanPixModal } from './components/checkout/AnnualPlanPixModal';
 import { LegalModal } from './components/legal/LegalModal';
+import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { Zap, X, CheckCircle, AlertCircle, Info } from 'lucide-react';
 
 const AppContent: React.FC = () => {
@@ -30,22 +32,32 @@ const AppContent: React.FC = () => {
 
   const isLegalModal = ['about', 'terms', 'privacy', 'licenses'].includes(activeView);
 
+  const isCatalogRoute = [
+    'catalog', 
+    'films', 
+    'series', 
+    'genres', 
+    'trending', 
+    'releases', 
+    'mylist'
+  ].includes(activeView);
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#06080F] text-slate-100 font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
+    <div className="min-h-screen flex flex-col bg-[#080607] text-slate-100 font-sans selection:bg-rose-600/30 selection:text-rose-200 pb-16 lg:pb-0">
       
       {/* Top Promotional Announcement Banner */}
       {adminConfig.promoBannerActive && (
         <aside 
           aria-label="Aviso de promoção"
-          className="bg-gradient-to-r from-cyan-950/80 via-blue-950/80 to-purple-950/80 border-b border-cyan-500/20 px-4 py-2 text-center text-xs text-cyan-200 flex items-center justify-center gap-2"
+          className="bg-gradient-to-r from-rose-950/90 via-red-950/80 to-amber-950/80 border-b border-rose-500/20 px-4 py-2 text-center text-xs text-amber-200 flex items-center justify-center gap-2"
         >
-          <Zap className="w-3.5 h-3.5 text-cyan-400 shrink-0 animate-pulse" />
+          <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0 animate-pulse" />
           <span className="font-medium tracking-wide">
             {adminConfig.promoBannerText}
           </span>
           <button
             onClick={() => startCheckoutForPlan('trimestral')}
-            className="ml-2 underline font-bold text-white hover:text-cyan-300 transition-colors cursor-pointer"
+            className="ml-2 underline font-bold text-white hover:text-amber-300 transition-colors cursor-pointer"
           >
             Aproveitar agora
           </button>
@@ -58,7 +70,7 @@ const AppContent: React.FC = () => {
       {/* Main Content Router */}
       <main className="flex-1">
         {activeView === 'home' && <HomeView />}
-        {(activeView === 'catalog' || activeView === 'films' || activeView === 'series') && <CatalogView />}
+        {isCatalogRoute && <CatalogView />}
         {activeView === 'movie-detail' && <MovieDetailPage />}
         {activeView === 'series-detail' && <SeriesDetailPage />}
         {activeView === 'live-tv' && <LiveTvPage />}
@@ -79,8 +91,14 @@ const AppContent: React.FC = () => {
       {/* Floating Support Button ("PRECISA DE AJUDA?") */}
       <FloatingSupport />
 
+      {/* Mobile Bottom Navigation Bar */}
+      <MobileBottomNav />
+
       {/* Cinematic HTML5 Video Player Modal */}
       <CinematicPlayerModal />
+
+      {/* Dedicated Annual Plan PIX + WhatsApp Modal */}
+      <AnnualPlanPixModal />
 
       {/* Legal & About Modal */}
       {isLegalModal && (

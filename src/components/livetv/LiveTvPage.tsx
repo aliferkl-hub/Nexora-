@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { ContentItem } from '../../types';
+import { StreamingImage } from '../common/StreamingImage';
+import { isContentPlayable } from '../../utils/catalogValidation';
 
 export const LiveTvPage: React.FC = () => {
   const { 
@@ -25,17 +27,14 @@ export const LiveTvPage: React.FC = () => {
     isFavorite 
   } = useApp();
 
-  const channels = contents.filter((c) => c.type === 'channel' && !c.hidden);
+  const channels = contents.filter((c) => c.type === 'channel' && !c.hidden && !c.isDemo);
 
   const categories = [
     'Todos os Canais',
     'Notícias',
     'Ciência & Espaço',
-    'Esportes',
-    'Documentários',
-    'Entretenimento',
-    'Infantil',
-    'Música'
+    'Cultura',
+    'Educativo'
   ];
 
   const [selectedCategory, setSelectedCategory] = useState<string>('Todos os Canais');
@@ -47,6 +46,7 @@ export const LiveTvPage: React.FC = () => {
   });
 
   const isFav = currentChannel ? isFavorite(currentChannel.id) : false;
+  const playable = currentChannel ? isContentPlayable(currentChannel) : false;
 
   return (
     <div className="w-full bg-[#06080F] min-h-screen text-slate-100 py-10">
@@ -58,6 +58,8 @@ export const LiveTvPage: React.FC = () => {
             <div className="flex items-center gap-2 text-xs font-mono text-cyan-400 uppercase tracking-widest mb-1">
               <Radio className="w-4 h-4 text-red-500 animate-pulse" />
               <span>TRANSMISSÕES OFICIAIS AO VIVO</span>
+              <span aria-hidden="true" className="text-slate-600">·</span>
+              <span className="text-slate-300">SINAIS HOMOLOGADOS</span>
             </div>
             <h1 className="font-display font-extrabold text-2xl sm:text-4xl text-white uppercase tracking-tight">
               TV AO VIVO EM ALTA DEFINIÇÃO
@@ -75,15 +77,16 @@ export const LiveTvPage: React.FC = () => {
               
               {/* Broadcast Preview Frame */}
               <div className="lg:col-span-7 relative aspect-video rounded-2xl overflow-hidden bg-slate-950 border border-white/10 group shadow-xl">
-                <img
+                <StreamingImage
                   src={currentChannel.bannerUrl}
                   alt={currentChannel.title}
-                  className="w-full h-full object-cover"
+                  type="channel"
+                  aspect="banner"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
 
                 {/* On-air badge */}
-                <div className="absolute top-4 left-4 flex items-center gap-2">
+                <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
                   <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600/90 text-white font-mono font-bold text-xs uppercase shadow-lg">
                     <span className="w-2 h-2 rounded-full bg-white animate-ping" />
                     <span>AO VIVO</span>
@@ -93,18 +96,35 @@ export const LiveTvPage: React.FC = () => {
                   </span>
                 </div>
 
+                {/* Channel Logo Watermark */}
+                {currentChannel.logoUrl && (
+                  <div className="absolute top-4 right-4 w-12 h-12 rounded-xl bg-black/70 border border-white/20 p-1 backdrop-blur-sm z-10 shadow-lg">
+                    <img 
+                      src={currentChannel.logoUrl} 
+                      alt="" 
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                  </div>
+                )}
+
                 {/* Play trigger overlay */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <button
-                    onClick={() => openPlayer(currentChannel)}
-                    className="p-5 rounded-full bg-cyan-400 text-slate-950 hover:bg-cyan-300 hover:scale-110 transition-all shadow-2xl shadow-cyan-500/50 cursor-pointer"
-                    title="Assistir Transmissão Ao Vivo"
-                  >
-                    <Play className="w-8 h-8 ml-1 fill-current" />
-                  </button>
+                <div className="absolute inset-0 flex items-center justify-center z-20">
+                  {playable ? (
+                    <button
+                      onClick={() => openPlayer(currentChannel)}
+                      className="p-5 rounded-full bg-cyan-400 text-slate-950 hover:bg-cyan-300 hover:scale-110 transition-all shadow-2xl shadow-cyan-500/50 cursor-pointer"
+                      title="Assistir Transmissão Ao Vivo"
+                    >
+                      <Play className="w-8 h-8 ml-1 fill-current" />
+                    </button>
+                  ) : (
+                    <div className="px-4 py-2 rounded-full bg-black/80 border border-amber-500/40 text-amber-300 font-mono text-xs">
+                      Sinal em manutenção ou autorização pendente
+                    </div>
+                  )}
                 </div>
 
-                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-xs text-slate-300 font-mono">
+                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-xs text-slate-300 font-mono z-10">
                   <span>{currentChannel.audioSpecs?.[0] || '1080p 60 FPS'}</span>
                   <span>Sinal Estável CDN Edge</span>
                 </div>
@@ -114,9 +134,18 @@ export const LiveTvPage: React.FC = () => {
               <div className="lg:col-span-5 flex flex-col justify-between h-full space-y-4">
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-mono text-cyan-400 font-semibold uppercase">
-                      📡 CANAL {currentChannel.channelNumber || '01'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {currentChannel.logoUrl && (
+                        <img 
+                          src={currentChannel.logoUrl} 
+                          alt="" 
+                          className="w-7 h-7 rounded-lg object-cover border border-white/10"
+                        />
+                      )}
+                      <span className="text-xs font-mono text-cyan-400 font-semibold uppercase">
+                        📡 CANAL {currentChannel.channelNumber || '01'}
+                      </span>
+                    </div>
                     <span className="text-xs font-mono text-emerald-400 flex items-center gap-1">
                       <span className="w-2 h-2 rounded-full bg-emerald-400" />
                       Sinal Homologado
@@ -178,35 +207,25 @@ export const LiveTvPage: React.FC = () => {
                           </div>
                         </div>
                       )}
-
-                      {/* Outros horários do dia */}
-                      {currentChannel.epgSchedule.length > 2 && (
-                        <div className="pt-1 space-y-1.5">
-                          {currentChannel.epgSchedule.slice(2).map((prog, idx) => (
-                            <div key={idx} className="flex items-center gap-3 text-xs px-1 text-slate-400">
-                              <span className="font-mono text-[11px] text-slate-500 shrink-0 font-medium">
-                                {prog.time}
-                              </span>
-                              <span className="line-clamp-1 text-slate-300">
-                                {prog.title}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </div>
                 )}
 
                 {/* Main Action buttons */}
                 <div className="flex flex-wrap items-center gap-3 pt-2">
-                  <button
-                    onClick={() => openPlayer(currentChannel)}
-                    className="flex-1 py-3.5 px-6 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-300 text-slate-950 font-extrabold text-xs sm:text-sm hover:from-cyan-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-cyan-500/20"
-                  >
-                    <Play className="w-4 h-4 fill-slate-950" />
-                    <span>ASSISTIR AGORA</span>
-                  </button>
+                  {playable ? (
+                    <button
+                      onClick={() => openPlayer(currentChannel)}
+                      className="flex-1 py-3.5 px-6 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-300 text-slate-950 font-extrabold text-xs sm:text-sm hover:from-cyan-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-cyan-500/20"
+                    >
+                      <Play className="w-4 h-4 fill-slate-950" />
+                      <span>ASSISTIR TRANSMISSÃO</span>
+                    </button>
+                  ) : (
+                    <div className="flex-1 py-3 px-4 rounded-xl bg-slate-800 text-slate-400 text-xs text-center font-mono">
+                      Aguardando liberação de sinal
+                    </div>
+                  )}
 
                   <button
                     onClick={() => toggleFavorite(currentChannel.id)}
@@ -244,7 +263,7 @@ export const LiveTvPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Channels Grid */}
+        {/* Channels Grid with Distinct Logos */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredChannels.map((channel) => {
             const isSelected = currentChannel?.id === channel.id;
@@ -263,20 +282,32 @@ export const LiveTvPage: React.FC = () => {
               >
                 <div>
                   <div className="relative aspect-video rounded-xl overflow-hidden bg-slate-900 mb-3">
-                    <img
+                    <StreamingImage
                       src={channel.bannerUrl}
                       alt={channel.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      type="channel"
+                      aspect="banner"
                     />
-                    <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-0.5 rounded bg-red-600 font-mono text-[9px] font-bold text-white uppercase">
+                    <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-0.5 rounded bg-red-600 font-mono text-[9px] font-bold text-white uppercase z-10">
                       <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                       <span>AO VIVO</span>
                     </div>
+
+                    {channel.logoUrl && (
+                      <div className="absolute bottom-2 right-2 w-9 h-9 rounded-lg bg-black/80 border border-white/20 p-1 z-10">
+                        <img src={channel.logoUrl} alt="" className="w-full h-full object-cover rounded" />
+                      </div>
+                    )}
                   </div>
 
-                  <span className="text-[10px] font-mono text-cyan-400 font-semibold block mb-0.5">
-                    CANAL {channel.channelNumber || '01'} · {channel.category}
-                  </span>
+                  <div className="flex items-center gap-2 mb-1">
+                    {channel.logoUrl && (
+                      <img src={channel.logoUrl} alt="" className="w-6 h-6 rounded object-cover border border-white/10" />
+                    )}
+                    <span className="text-[10px] font-mono text-cyan-400 font-semibold block">
+                      CANAL {channel.channelNumber || '01'}
+                    </span>
+                  </div>
 
                   <h3 className="font-display font-bold text-base text-white group-hover:text-cyan-300 transition-colors line-clamp-1">
                     {channel.title}
@@ -298,8 +329,8 @@ export const LiveTvPage: React.FC = () => {
                     }}
                     className="text-cyan-400 font-semibold hover:underline flex items-center gap-1"
                   >
-                    <Play className="w-3 h-3 fill-cyan-400" />
-                    <span>Sintonizar</span>
+                    <span>Assistir</span>
+                    <span>▶</span>
                   </button>
                 </div>
               </div>

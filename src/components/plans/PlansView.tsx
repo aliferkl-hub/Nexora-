@@ -8,15 +8,18 @@ import {
   HelpCircle, 
   Tag, 
   ArrowRight,
-  Tv
+  Tv,
+  MessageCircle
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { PlanConfig } from '../../types';
+import { getWhatsAppNegotiateUrl, OFFICIAL_PIX_CONFIG } from '../../utils/pixHelper';
 
 export const PlansView: React.FC = () => {
   const { 
     plans, 
     startCheckoutForPlan, 
+    openAnnualPixModal,
     appliedCoupon, 
     applyCoupon, 
     removeCoupon,
@@ -38,18 +41,18 @@ export const PlansView: React.FC = () => {
   };
 
   return (
-    <div className="w-full py-12 sm:py-20 bg-[#06080F] min-h-[90vh]">
+    <div className="w-full py-12 sm:py-20 bg-[#080607] min-h-[90vh]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header Section */}
         <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 text-xs font-mono font-medium mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-950/60 border border-rose-500/30 text-amber-300 text-xs font-mono font-medium mb-4">
             <Sparkles className="w-3.5 h-3.5" />
             <span>ACESSO COMPLETO E SEM FIDELIDADE</span>
           </div>
 
           <h1 className="font-display font-extrabold text-3xl sm:text-5xl lg:text-6xl text-white uppercase tracking-tight text-balance">
-            ESCOLHA SEU PLANO NEXORA
+            ESCOLHA SEU PLANO PIZZA CINE
           </h1>
 
           <p className="text-slate-300 text-sm sm:text-lg mt-4 leading-relaxed">
@@ -58,17 +61,17 @@ export const PlansView: React.FC = () => {
         </div>
 
         {/* Promo Notice Strip */}
-        <div className="max-w-4xl mx-auto mb-10 p-4 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-blue-950/30 to-purple-950/40 border border-cyan-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+        <div className="max-w-4xl mx-auto mb-10 p-4 rounded-2xl bg-gradient-to-r from-rose-950/40 via-red-950/30 to-amber-950/40 border border-rose-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
               <Zap className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-xs font-mono text-cyan-400 uppercase font-bold tracking-wider block">
+              <span className="text-xs font-mono text-amber-400 uppercase font-bold tracking-wider block">
                 CONDIÇÃO ESPECIAL DE LANÇAMENTO
               </span>
               <span className="text-sm text-slate-200 font-medium">
-                Planos Trimestral, Semestral e Anual incluem acesso completo sem custos extras.
+                Planos Trimestral, Semestral e Anual com ativação via PIX e atendimento WhatsApp.
               </span>
             </div>
           </div>
@@ -91,14 +94,14 @@ export const PlansView: React.FC = () => {
               <div className="flex items-center gap-1.5 w-full">
                 <input
                   type="text"
-                  placeholder="Cupom (ex: NEXORA10)"
+                  placeholder="Cupom (ex: PIZZA10)"
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                  className="px-3 py-1.5 text-xs bg-slate-900 border border-white/15 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 w-full sm:w-44 uppercase"
+                  className="px-3 py-1.5 text-xs bg-slate-900 border border-white/15 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 w-full sm:w-44 uppercase"
                 />
                 <button
                   type="submit"
-                  className="px-3 py-1.5 text-xs font-semibold bg-cyan-500 text-slate-950 rounded-xl hover:bg-cyan-400 transition-colors whitespace-nowrap cursor-pointer"
+                  className="px-3.5 py-1.5 text-xs font-extrabold bg-gradient-to-r from-rose-600 to-amber-500 text-white rounded-xl hover:from-rose-500 hover:to-amber-400 transition-colors whitespace-nowrap cursor-pointer border border-amber-300/30"
                 >
                   Aplicar
                 </button>
@@ -223,21 +226,52 @@ export const PlansView: React.FC = () => {
                   ))}
                 </div>
 
-                {/* CTA Action Button */}
-                <button
-                  onClick={() => startCheckoutForPlan(plan.id)}
-                  className={`w-full py-3.5 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer ${
-                    isAnnual
-                      ? 'bg-gradient-to-r from-cyan-400 via-cyan-300 to-teal-300 text-slate-950 shadow-lg shadow-cyan-500/30 hover:from-cyan-300 hover:to-teal-200'
-                      : 'bg-white/10 hover:bg-cyan-500 hover:text-slate-950 text-white border border-white/10'
-                  }`}
-                >
-                  <span>ASSINAR AGORA</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
+                {/* CTA Action Buttons & Installment Notices */}
+                {isAnnual ? (
+                  <div className="space-y-2.5">
+                    {/* Primary Button: Assinar Plano Anual */}
+                    <button
+                      type="button"
+                      onClick={() => openAnnualPixModal()}
+                      className="w-full py-3.5 px-4 rounded-xl font-extrabold text-xs sm:text-sm bg-gradient-to-r from-cyan-400 via-cyan-300 to-teal-300 text-slate-950 shadow-lg shadow-cyan-500/30 hover:from-cyan-300 hover:to-teal-200 transition-all transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Sparkles className="w-4 h-4 fill-slate-950" />
+                      <span>ASSINAR PLANO ANUAL</span>
+                    </button>
+
+                    {/* Notice of Installments */}
+                    <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-center space-y-1">
+                      <span className="text-[11px] font-bold text-white block">
+                        Plano anual — pagamento parcelado disponível
+                      </span>
+                      <p className="text-[10px] text-emerald-300/90 leading-tight">
+                        Para pagamento parcelado, fale conosco pelo WhatsApp.
+                      </p>
+                    </div>
+
+                    {/* Button 4: PAGAR / FALAR NO WHATSAPP */}
+                    <a
+                      href={getWhatsAppNegotiateUrl()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-2.5 px-3 rounded-xl font-bold text-[11px] bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all flex items-center justify-center gap-1.5 shadow-md shadow-emerald-950/40 cursor-pointer"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5 fill-slate-950" />
+                      <span>PAGAR / FALAR NO WHATSAPP</span>
+                    </a>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => startCheckoutForPlan(plan.id)}
+                    className="w-full py-3.5 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer bg-white/10 hover:bg-cyan-500 hover:text-slate-950 text-white border border-white/10"
+                  >
+                    <span>ASSINAR AGORA</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                )}
 
                 <p className="text-[10px] text-center text-slate-400 mt-2.5">
-                  Ativação instantânea · Cancele quando quiser
+                  {isAnnual ? 'Chave Pix oficial + Suporte direto WhatsApp' : 'Ativação instantânea · Cancele quando quiser'}
                 </p>
               </div>
             );

@@ -11,11 +11,20 @@ import {
   Lock, 
   Sparkles,
   Smartphone,
-  ChevronRight
+  ChevronRight,
+  MessageCircle,
+  Clock,
+  AlertCircle
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { PlanConfig } from '../../types';
 import { QRCodeSVG } from '../common/QRCodeSVG';
+import { 
+  OFFICIAL_PIX_CONFIG, 
+  generatePixCopiaECola, 
+  getWhatsAppNegotiateUrl, 
+  getWhatsAppProofUrl 
+} from '../../utils/pixHelper';
 
 export const CheckoutView: React.FC = () => {
   const { 
@@ -23,15 +32,16 @@ export const CheckoutView: React.FC = () => {
     selectedPlanForCheckout, 
     setSelectedPlanForCheckout,
     appliedCoupon,
-    completeSubscriptionPayment,
+    createPaymentOrder,
     currentUser,
     setActiveView,
     addToast
   } = useApp();
 
-  const currentPlan: PlanConfig = selectedPlanForCheckout || plans[1] || plans[0];
+  const currentPlan: PlanConfig = selectedPlanForCheckout || plans[3] || plans[1] || plans[0];
+  const isAnnual = currentPlan.id === 'anual';
 
-  // Steps: 1: Identificação, 2: Pagamento, 3: Processando, 4: Sucesso
+  // Steps: 1: Identificação, 2: Pagamento, 3: Processando, 4: Confirmação & Comprovante
   const [step, setStep] = useState<number>(1);
   const [name, setName] = useState(currentUser?.name || '');
   const [email, setEmail] = useState(currentUser?.email || '');
@@ -47,8 +57,10 @@ export const CheckoutView: React.FC = () => {
   const [installments, setInstallments] = useState('1');
 
   // Pix simulated state
-  const [copiedPix, setCopiedPix] = useState(false);
+  const [copiedKey, setCopiedKey] = useState(false);
+  const [copiedPayload, setCopiedPayload] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [createdOrderId, setCreatedOrderId] = useState<string>('');
 
   // Financial calculations
   const discountAmount = appliedCoupon 
@@ -56,25 +68,52 @@ export const CheckoutView: React.FC = () => {
     : 0;
   const finalPrice = Math.max(0, currentPlan.totalPrice - discountAmount);
 
-  const pixPayload = `00020126580014br.gov.bcb.pix0136nexora-pay-${Date.now()}520400005303986540${finalPrice.toFixed(2)}5802BR5916NEXORA PLAY ENT6009SAO PAULO62070503***6304`;
+  const pixPayload = generatePixCopiaECola(finalPrice, createdOrderId || 'PIZZACINE');
 
-  const handleCopyPix = () => {
-    navigator.clipboard.writeText(pixPayload);
-    setCopiedPix(true);
-    addToast('Código PIX Copia e Cola copiado para a área de transferência!', 'success');
-    setTimeout(() => setCopiedPix(false), 3000);
+  const handleCopyPixKey = async () => {
+    try {
+      await navigator.clipboard.writeText(OFFICIAL_PIX_CONFIG.rawKey);
+      setCopiedKey(true);
+      addToast(`Chave Pix ${OFFICIAL_PIX_CONFIG.formattedKey} copiada para o celular!`, 'success');
+      setTimeout(() => setCopiedKey(false), 3000);
+    } catch {
+      addToast(`Copie a chave: ${OFFICIAL_PIX_CONFIG.rawKey}`, 'info');
+    }
+  };
+
+  const handleCopyPixPayload = async () => {
+    try {
+      await navigator.clipboard.writeText(pixPayload);
+      setCopiedPayload(true);
+      addToast('Código Pix Copia e Cola copiado com sucesso!', 'success');
+      setTimeout(() => setCopiedPayload(false), 3000);
+    } catch {
+      // fallback
+    }
   };
 
   const handleConfirmPayment = () => {
     setIsProcessing(true);
     setStep(3);
 
-    // Simulate gateway authentication & webhooks settlement
+    const order = createPaymentOrder({
+      planId: currentPlan.id,
+      paymentMethod,
+      customerName: name.trim() || 'Cliente Pizza Cine',
+      customerEmail: email.trim() || 'cliente@pizzacine.com.br',
+      customerPhone: phone.trim() || OFFICIAL_PIX_CONFIG.formattedKey,
+      status: 'waiting_payment',
+      notes: paymentMethod === 'PIX'
+        ? `Pagamento Pix gerado com a chave ${OFFICIAL_PIX_CONFIG.rawKey}. Aguardando envio de comprovante.`
+        : `Transação simulada via ${paymentMethod}.`
+    });
+
+    setCreatedOrderId(order.id);
+
     setTimeout(() => {
       setIsProcessing(false);
       setStep(4);
-      completeSubscriptionPayment(currentPlan.id, paymentMethod);
-    }, 1800);
+    }, 1500);
   };
 
   return (
@@ -92,11 +131,11 @@ export const CheckoutView: React.FC = () => {
 
         {/* Header Breadcrumbs */}
         <div className="mb-8 text-center sm:text-left">
-          <span className="text-xs font-mono text-cyan-400 uppercase tracking-widest font-semibold">
+          <span className="text-xs font-mono text-amber-400 uppercase tracking-widest font-semibold">
             CHECKOUT SEGURO SSL 256-BIT
           </span>
           <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-white uppercase tracking-tight mt-1">
-            FINALIZAR ASSINATURA NEXORA PLAY
+            FINALIZAR ASSINATURA PIZZA CINE
           </h1>
         </div>
 
@@ -226,27 +265,120 @@ export const CheckoutView: React.FC = () => {
 
                 {/* Sub-view: PIX */}
                 {paymentMethod === 'PIX' && (
-                  <div className="p-4 rounded-xl bg-black/40 border border-white/8 text-center flex flex-col items-center">
-                    <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono mb-3">
-                      <Sparkles className="w-4 h-4" />
-                      <span>LIBERAÇÃO NO MESMO SEGUNDO VIA PIX</span>
+                  <div className="p-5 rounded-2xl bg-[#060A14] border border-cyan-500/40 space-y-4">
+                    <div className="flex items-center justify-between border-b border-white/8 pb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-cyan-950/80 border border-cyan-500/30 text-cyan-400 flex items-center justify-center">
+                          <QrCode className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-sm text-white">
+                            Pagamento Instantâneo via PIX
+                          </h3>
+                          <span className="text-[11px] font-mono text-emerald-400">
+                            Chave oficial verificada
+                          </span>
+                        </div>
+                      </div>
+
+                      <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-500/30">
+                        Tipo: Telefone
+                      </span>
                     </div>
 
-                    <div className="bg-white p-3 rounded-xl mb-3 shadow-lg">
-                      <QRCodeSVG value={pixPayload} size={150} />
+                    {/* Notice of Installments (Plano Anual) */}
+                    {isAnnual && (
+                      <div className="p-3.5 rounded-xl bg-gradient-to-r from-emerald-950/40 via-cyan-950/30 to-blue-950/40 border border-emerald-500/40 space-y-2">
+                        <span className="font-bold text-xs text-white block">
+                          💳 Plano anual — pagamento parcelado disponível
+                        </span>
+                        <p className="text-[11px] text-slate-300">
+                          Para pagamento parcelado, fale conosco pelo WhatsApp.
+                        </p>
+                        <a
+                          href={getWhatsAppNegotiateUrl()}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-colors"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5 fill-slate-950" />
+                          <span>PAGAR / FALAR NO WHATSAPP</span>
+                        </a>
+                      </div>
+                    )}
+
+                    {/* Highlighted Pix Key Box */}
+                    <div className="p-4 rounded-xl bg-[#090D1A] border-2 border-cyan-400/80 space-y-2.5">
+                      <div className="flex items-center justify-between text-xs text-slate-400 font-mono">
+                        <span>Chave Pix Principal (Telefone):</span>
+                        <span className="text-emerald-400 font-bold">✓ Homologada</span>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-black/60 p-3 rounded-xl border border-white/10 gap-3">
+                        <div>
+                          <span className="font-mono text-lg font-extrabold text-cyan-300 tracking-wider block">
+                            {OFFICIAL_PIX_CONFIG.formattedKey}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            Chave para cópia: {OFFICIAL_PIX_CONFIG.rawKey}
+                          </span>
+                        </div>
+
+                        {/* BUTTON: COPIAR CHAVE PIX */}
+                        <button
+                          type="button"
+                          onClick={handleCopyPixKey}
+                          className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md ${
+                            copiedKey
+                              ? 'bg-emerald-400 text-slate-950'
+                              : 'bg-cyan-400 hover:bg-cyan-300 text-slate-950'
+                          }`}
+                        >
+                          {copiedKey ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                          <span>{copiedKey ? 'Chave Copiada!' : 'COPIAR CHAVE PIX'}</span>
+                        </button>
+                      </div>
+
+                      <p className="text-[11px] text-slate-400">
+                        Toque no botão para copiar a chave Pix e colar no aplicativo do seu banco.
+                      </p>
                     </div>
 
-                    <p className="text-xs text-slate-300 max-w-xs mb-3">
-                      Abra o aplicativo do seu banco, escolha PIX e aponte a câmera para o QR Code acima.
-                    </p>
+                    {/* QR Code Container & Steps */}
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center pt-1">
+                      <div className="sm:col-span-5 flex flex-col items-center justify-center p-3 rounded-xl bg-white border border-slate-200">
+                        <QRCodeSVG value={pixPayload} size={140} />
+                        <span className="text-[9px] font-mono text-slate-800 font-bold mt-1.5 text-center">
+                          QR Code Oficial PIZZA CINE
+                        </span>
+                      </div>
 
-                    <button
-                      onClick={handleCopyPix}
-                      className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 text-xs font-mono font-medium flex items-center gap-2 transition-colors cursor-pointer"
-                    >
-                      {copiedPix ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                      <span>{copiedPix ? 'Copiado com Sucesso!' : 'Copiar Chave PIX (Copia e Cola)'}</span>
-                    </button>
+                      <div className="sm:col-span-7 space-y-2 text-xs text-slate-300">
+                        <span className="font-bold text-cyan-300 text-xs uppercase font-mono block">
+                          Como Pagar:
+                        </span>
+                        <ol className="space-y-1.5 list-decimal list-inside text-slate-300 text-[11px] leading-relaxed">
+                          <li>Abra o aplicativo do seu banco.</li>
+                          <li>Escolha <strong>Pix</strong> e selecione <strong>Chave Telefone</strong> ou <strong>Ler QR Code</strong>.</li>
+                          <li>Cole a chave: <strong>{OFFICIAL_PIX_CONFIG.rawKey}</strong> ({OFFICIAL_PIX_CONFIG.formattedKey}).</li>
+                          <li>Confirme o valor de <strong>R$ {finalPrice.toFixed(2).replace('.', ',')}</strong> e finalize.</li>
+                          <li>Envie o comprovante pelo WhatsApp para liberação.</li>
+                        </ol>
+                      </div>
+                    </div>
+
+                    {/* Copia e Cola button */}
+                    <div className="pt-2 border-t border-white/8 flex items-center justify-between text-xs">
+                      <span className="text-slate-400 text-[11px]">Código Pix Copia e Cola:</span>
+                      <button
+                        type="button"
+                        onClick={handleCopyPixPayload}
+                        className="px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-white/10 text-[11px] font-mono flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        {copiedPayload ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copiedPayload ? 'Copiado' : 'Copiar Copia e Cola'}</span>
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -373,41 +505,132 @@ export const CheckoutView: React.FC = () => {
               </div>
             )}
 
-            {/* Step 4: Success Screen */}
+            {/* Step 4: Confirmation & Proof Submission */}
             {step === 4 && (
-              <div className="py-10 text-center flex flex-col items-center">
-                <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-400 flex items-center justify-center mb-5 animate-bounce">
-                  <CheckCircle className="w-8 h-8" />
-                </div>
-                
-                <h3 className="font-display font-extrabold text-2xl text-white uppercase">
-                  Acesso Liberado com Sucesso!
-                </h3>
+              <div className="py-8 text-center flex flex-col items-center space-y-5">
+                {paymentMethod === 'PIX' ? (
+                  <>
+                    <div className="w-16 h-16 rounded-full bg-amber-500/20 border-2 border-amber-400/50 text-amber-400 flex items-center justify-center shadow-lg shadow-amber-950/40 animate-pulse">
+                      <Clock className="w-8 h-8" />
+                    </div>
 
-                <p className="text-xs text-slate-300 max-w-md mt-2 leading-relaxed">
-                  Bem-vindo à NEXORA PLAY! Sua assinatura do <strong className="text-cyan-300">{currentPlan.name}</strong> está ativa. Você já pode assistir a todos os filmes, séries e canais.
-                </p>
+                    <div>
+                      <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-950/80 border border-amber-500/50 text-amber-300 font-mono text-xs font-bold uppercase mb-2">
+                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                        <span>PAGAMENTO AGUARDANDO CONFIRMAÇÃO</span>
+                      </span>
 
-                <div className="mt-8 flex flex-col sm:flex-row gap-3 w-full">
-                  <button
-                    onClick={() => {
-                      setActiveView('client');
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-300 text-slate-950 font-bold text-xs sm:text-sm hover:from-cyan-300 transition-all cursor-pointer"
-                  >
-                    Ir para Meu Nexora
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveView('catalog');
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    className="flex-1 py-3 px-4 rounded-xl bg-slate-800 text-white font-semibold text-xs sm:text-sm hover:bg-slate-700 transition-all cursor-pointer"
-                  >
-                    Explorar Catálogo Agora
-                  </button>
-                </div>
+                      <h2 className="font-display font-extrabold text-2xl sm:text-3xl text-white uppercase mt-1">
+                        JÁ REALIZOU O PAGAMENTO?
+                      </h2>
+
+                      <p className="text-xs sm:text-sm text-slate-300 max-w-md mt-2 leading-relaxed mx-auto">
+                        Seu pedido foi registrado no sistema. Para liberar seu acesso ao <strong className="text-cyan-300">{currentPlan.name}</strong>, envie agora o comprovante pelo WhatsApp oficial.
+                      </p>
+                    </div>
+
+                    {/* Order summary box */}
+                    <div className="w-full max-w-md p-4 rounded-2xl bg-black/50 border border-white/10 text-left space-y-1.5 text-xs font-mono">
+                      <div className="flex justify-between text-slate-400">
+                        <span>Número do Pedido:</span>
+                        <span className="text-amber-300 font-bold">{createdOrderId || 'ORD-PIZZACINE'}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-400">
+                        <span>Plano:</span>
+                        <span className="text-white">{currentPlan.name}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-400">
+                        <span>Valor:</span>
+                        <span className="text-white font-bold">R$ {finalPrice.toFixed(2).replace('.', ',')}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-400">
+                        <span>Chave Pix:</span>
+                        <span className="text-amber-300">{OFFICIAL_PIX_CONFIG.formattedKey}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-400 pt-1 border-t border-white/5">
+                        <span>Status:</span>
+                        <span className="text-amber-400 font-bold">Aguardando Comprovante</span>
+                      </div>
+                    </div>
+
+                    {/* BUTTON 5: ENVIAR COMPROVANTE PELO WHATSAPP */}
+                    <div className="w-full max-w-md space-y-3">
+                      <a
+                        href={getWhatsAppProofUrl(
+                          createdOrderId
+                            ? `Olá! Acabei de realizar o pagamento do ${currentPlan.name} (Pedido ${createdOrderId}). Estou enviando meu comprovante para ativação.`
+                            : undefined
+                        )}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-extrabold text-sm sm:text-base transition-all flex items-center justify-center gap-3 shadow-xl shadow-emerald-950/50 cursor-pointer"
+                      >
+                        <MessageCircle className="w-5 h-5 fill-slate-950" />
+                        <span>ENVIAR COMPROVANTE PELO WHATSAPP</span>
+                      </a>
+
+                      <p className="text-[11px] text-slate-400 leading-normal">
+                        O botão abre o WhatsApp oficial <strong>{OFFICIAL_PIX_CONFIG.formattedKey}</strong> para você anexar a foto ou comprovante do Pix.
+                      </p>
+                    </div>
+
+                    {/* Security Notice */}
+                    <div className="p-4 rounded-2xl bg-slate-900/60 border border-white/8 text-left text-xs text-slate-400 max-w-md flex items-start gap-3">
+                      <ShieldCheck className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                      <div className="text-[11px] leading-relaxed">
+                        <strong className="text-slate-200 block mb-0.5">Segurança do Sistema</strong>
+                        A ativação definitiva do plano ocorre após conferência do comprovante pelo atendente ou pelo painel do administrador.
+                      </div>
+                    </div>
+
+                    <div className="pt-2 flex flex-col sm:flex-row gap-3 w-full max-w-md">
+                      <button
+                        onClick={() => {
+                          setActiveView('client');
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="flex-1 py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs sm:text-sm transition-all cursor-pointer"
+                      >
+                        Ver no Meu Pizza Cine
+                      </button>
+                      <button
+                        onClick={() => {
+                          setActiveView('catalog');
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="flex-1 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 font-semibold text-xs sm:text-sm transition-all cursor-pointer"
+                      >
+                        Ver Catálogo
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-400 flex items-center justify-center mb-5 animate-bounce">
+                      <CheckCircle className="w-8 h-8" />
+                    </div>
+                    
+                    <h3 className="font-display font-extrabold text-2xl text-white uppercase">
+                      Solicitação Registrada!
+                    </h3>
+
+                    <p className="text-xs text-slate-300 max-w-md mt-2 leading-relaxed">
+                      Sua solicitação de assinatura para o <strong className="text-amber-300">{currentPlan.name}</strong> foi recebida.
+                    </p>
+
+                    <div className="mt-8 flex flex-col sm:flex-row gap-3 w-full max-w-md">
+                      <button
+                        onClick={() => {
+                          setActiveView('client');
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-rose-600 via-red-600 to-amber-500 text-white font-extrabold text-xs sm:text-sm hover:from-rose-500 transition-all cursor-pointer border border-amber-300/30"
+                      >
+                        Ir para Meu Pizza Cine
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
