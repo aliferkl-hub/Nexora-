@@ -73,13 +73,15 @@ export const FloatingSupport: React.FC = () => {
 
           {/* Quick Channels */}
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <button
-              onClick={openWhatsApp}
+            <a
+              href={`https://wa.me/55${cleanWhatsAppNumber}?text=${encodeURIComponent('Olá! Gostaria de falar no WhatsApp oficial da NEXORA PLAY sobre os planos e ativação.')}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/30 hover:bg-emerald-900/60 text-emerald-300 flex flex-col items-center text-center gap-1 transition-colors cursor-pointer"
             >
-              <MessageCircle className="w-4 h-4" />
-              <span className="font-semibold text-[11px]">Chamar no WhatsApp</span>
-            </button>
+              <MessageCircle className="w-4 h-4 text-emerald-400" />
+              <span className="font-semibold text-[11px]">Falar comigo no WhatsApp</span>
+            </a>
 
             <button
               onClick={() => {

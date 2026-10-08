@@ -178,11 +178,11 @@ export const PlansView: React.FC = () => {
 
                   <div className="text-xs text-slate-400 mt-1.5 flex items-center justify-between">
                     <span>Total: R$ {finalPrice.toFixed(2).replace('.', ',')}</span>
-                    {appliedCoupon && (
-                      <span className="text-emerald-400 font-mono text-[11px]">
-                        -{appliedCoupon.discountPercent}%
-                      </span>
-                    )}
+                    <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${
+                      isAnnual ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/30 font-bold' : 'bg-slate-900 text-slate-400'
+                    }`}>
+                      {isAnnual ? 'PIX à vista ou até 12x' : 'À vista no PIX'}
+                    </span>
                   </div>
 
                   {/* Savings Visual Callout */}
